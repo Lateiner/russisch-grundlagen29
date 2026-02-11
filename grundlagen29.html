@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russische Grammatik: ЭТОТ, ЭТА, ЭТО, ЭТИ</title>
+    <!-- Drag & Drop Polyfill für Touch-Geräte -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #3f51b5;
+            --secondary-color: #f5f5f5;
+            --success-color: #4caf50;
+            --error-color: #f44336;
+            --text-color: #333;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #e8eaf6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+
+        h1 { text-align: center; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 40px; }
+
+        /* Grammatik Box */
+        .grammar-box {
+            background-color: #e3f2fd;
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            margin-bottom: 40px;
+            border-radius: 4px;
+        }
+
+        .grammar-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+        }
+
+        .grammar-table th, .grammar-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .grammar-table th { background-color: var(--primary-color); color: white; }
+
+        /* Übungen */
+        .exercise {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+
+        .exercise-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: block;
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        select {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        select:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* Klassen für Feedback */
+        select.correct, .dropzone.correct, input[type="radio"].correct + label {
+            border-color: var(--success-color) !important;
+            background-color: #e8f5e9;
+        }
+        
+        /* Speziell für Selects, da background-color bei options oft browserabhängig ist, färben wir den Border stark */
+        select.correct {
+            border-color: var(--success-color);
+            background-color: #e8f5e9; 
+            color: #2e7d32;
+        }
+
+        select.wrong, .dropzone.wrong {
+            border-color: var(--error-color) !important;
+            background-color: #ffebee;
+        }
+
+        /* Buttons */
+        .btn-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        .btn-check { background-color: var(--primary-color); color: white; }
+        .btn-reset { background-color: #9e9e9e; color: white; }
+        .btn-solve { background-color: #ff9800; color: white; }
+
+        .feedback {
+            margin-top: 10px;
+            font-weight: bold;
+            min-height: 24px;
+        }
+        .feedback.success { color: var(--success-color); }
+        .feedback.error { color: var(--error-color); }
+
+        /* Drag & Drop Styles */
+        .dd-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .draggables {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            min-height: 40px;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .draggable {
+            background: white;
+            border: 1px solid var(--primary-color);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .dropzone {
+            flex: 1;
+            min-width: 120px;
+            min-height: 100px;
+            border: 2px dashed #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        .dropzone h4 { margin-top: 0; text-align: center; font-size: 14px; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .btn-container { flex-direction: column; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Russische Grammatik</h1>
+    <div class="subtitle">Grundlagen: Verwendung von ЭТОТ, ЭТА, ЭТО, ЭТИ</div>
+
+    <!-- Einführung -->
+    <div class="grammar-box">
+        <h2>Einführung</h2>
+        <p>Im Russischen unterscheidet man zwischen dem hinweisenden Fürwort (Demonstrativpronomen), das sich an das Substantiv anpasst ("dieser, diese, dieses"), und dem unveränderlichen Einführungswort "Das ist..." (Identifikation).</p>
+        
+        <h3>1. Das angepasste Pronomen (Qualifizierung)</h3>
+        <table class="grammar-table">
+            <thead>
+                <tr>
+                    <th>Geschlecht/Zahl</th>
+                    <th>Russisch</th>
+                    <th>Beispiel</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Männlich (Maskulinum)</td>
+                    <td><b>ЭТОТ</b></td>
+                    <td>этот дом (dieses Haus)</td>
+                </tr>
+                <tr>
+                    <td>Weiblich (Femininum)</td>
+                    <td><b>ЭТА</b></td>
+                    <td>эта машина (dieses Auto)</td>
+                </tr>
+                <tr>
+                    <td>Sächlich (Neutrum)</td>
+                    <td><b>ЭТО</b></td>
+                    <td>это окно (dieses Fenster)</td>
+                </tr>
+                <tr>
+                    <td>Mehrzahl (Plural)</td>
+                    <td><b>ЭТИ</b></td>
+                    <td>эти люди (diese Leute)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>2. Die Identifikation ("Das ist...")</h3>
+        <p>Wenn wir sagen wollen "Das ist ein Haus" oder "Das sind Blumen", verwenden wir immer die unveränderliche Form <b>ЭТО</b>.</p>
+    </div>
+
+    <!-- Aufgabe 1 -->
+    <div class="exercise" id="ex1">
+        <span class="exercise-title">Aufgabe 1: Männliches Geschlecht (Maskulinum)</span>
+        <p>Wählen Sie das richtige Pronomen für männliche Substantive ("dieser").</p>
+        <div class="input-group">
+            <select data-answer="этот">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>студент (Student)</span>
+        </div>
+        <div class="input-group">
+            <select data-answer="этот">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>телефон (Telefon)</span>
+        </div>
+        
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex1')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex1')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex1')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 2 -->
+    <div class="exercise" id="ex2">
+        <span class="exercise-title">Aufgabe 2: Weibliches Geschlecht (Femininum)</span>
+        <p>Wählen Sie das richtige Pronomen für weibliche Substantive ("diese").</p>
+        <div class="input-group">
+            <select data-answer="эта">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>книга (Buch)</span>
+        </div>
+        <div class="input-group">
+            <select data-answer="эта">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>сумка (Tasche)</span>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex2')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex2')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex2')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 3 -->
+    <div class="exercise" id="ex3">
+        <span class="exercise-title">Aufgabe 3: Sächliches Geschlecht (Neutrum)</span>
+        <p>Wählen Sie das richtige Pronomen für sächliche Substantive ("dieses").</p>
+        <div class="input-group">
+            <select data-answer="это">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>фото (Foto)</span>
+        </div>
+        <div class="input-group">
+            <select data-answer="это">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>письмо (Brief)</span>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex3')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex3')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex3')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 4 -->
+    <div class="exercise" id="ex4">
+        <span class="exercise-title">Aufgabe 4: Mehrzahl (Plural)</span>
+        <p>Wählen Sie das richtige Pronomen für Substantive im Plural ("diese").</p>
+        <div class="input-group">
+            <select data-answer="эти">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>дети (Kinder)</span>
+        </div>
+        <div class="input-group">
+            <select data-answer="эти">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>очки (Brille/Gläser)</span>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex4')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex4')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex4')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 5 -->
+    <div class="exercise" id="ex5">
+        <span class="exercise-title">Aufgabe 5: Identifikation ("Das ist...")</span>
+        <p>Wählen Sie die korrekte Übersetzung für "Das ist...".</p>
+        <div class="input-group">
+            <select data-answer="это">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>мой брат. (Das ist mein Bruder.)</span>
+        </div>
+        <div class="input-group">
+            <select data-answer="это">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>твои друзья? (Sind das deine Freunde?)</span>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex5')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex5')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex5')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 6 -->
+    <div class="exercise" id="ex6">
+        <span class="exercise-title">Aufgabe 6: Gemischte Übung</span>
+        <p>Wählen Sie die richtige Form aus dem Menü.</p>
+        <div class="input-group">
+            <select data-answer="эта">
+                <option value="">-- Wählen --</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>девушка красивая. (Diese junge Frau ist schön.)</span>
+        </div>
+        <div class="input-group">
+            <select data-answer="этот">
+                <option value="">-- Wählen --</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>парк большой. (Dieser Park ist groß.)</span>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex6')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex6')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex6')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 7: Drag & Drop -->
+    <div class="exercise" id="ex7">
+        <span class="exercise-title">Aufgabe 7: Sortieren (Drag & Drop)</span>
+        <p>Ziehen Sie die Wörter in die richtige Kategorie (welches Pronomen passt?).</p>
+        
+        <div class="draggables" id="ex7-draggables">
+            <div class="draggable" draggable="true" ondragstart="drag(event)" id="d1" data-cat="m">стол (Tisch)</div>
+            <div class="draggable" draggable="true" ondragstart="drag(event)" id="d2" data-cat="f">лампа (Lampe)</div>
+            <div class="draggable" draggable="true" ondragstart="drag(event)" id="d3" data-cat="n">море (Meer)</div>
+            <div class="draggable" draggable="true" ondragstart="drag(event)" id="d4" data-cat="p">книги (Bücher)</div>
+        </div>
+
+        <div class="dd-container">
+            <div class="dropzone" ondrop="drop(event)" ondragover="allowDrop(event)" data-cat="m">
+                <h4>ЭТОТ (M)</h4>
+            </div>
+            <div class="dropzone" ondrop="drop(event)" ondragover="allowDrop(event)" data-cat="f">
+                <h4>ЭТА (F)</h4>
+            </div>
+            <div class="dropzone" ondrop="drop(event)" ondragover="allowDrop(event)" data-cat="n">
+                <h4>ЭТО (N)</h4>
+            </div>
+            <div class="dropzone" ondrop="drop(event)" ondragover="allowDrop(event)" data-cat="p">
+                <h4>ЭТИ (Pl)</h4>
+            </div>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkDragDrop('ex7')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetDragDrop('ex7')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionDragDrop('ex7')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 8: Radio Buttons -->
+    <div class="exercise" id="ex8">
+        <span class="exercise-title">Aufgabe 8: Richtiger Satz</span>
+        <p>Welcher Satz ist grammatikalisch korrekt? (Subjekt "Wohnung" / квартира ist weiblich).</p>
+        
+        <div class="input-group">
+            <input type="radio" name="ex8-radio" value="wrong1" id="ex8-opt1">
+            <label for="ex8-opt1">Этот квартира новая.</label>
+        </div>
+        <div class="input-group">
+            <input type="radio" name="ex8-radio" value="correct" id="ex8-opt2">
+            <label for="ex8-opt2">Эта квартира новая.</label>
+        </div>
+        <div class="input-group">
+            <input type="radio" name="ex8-radio" value="wrong2" id="ex8-opt3">
+            <label for="ex8-opt3">Эти квартира новая.</label>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkRadio('ex8')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetRadio('ex8')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionRadio('ex8', 1)">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 9: Unterscheidung Bedeutung -->
+    <div class="exercise" id="ex9">
+        <span class="exercise-title">Aufgabe 9: Unterscheidung Bedeutung</span>
+        <p>Entscheiden Sie: Meint der Satz "Das ist ein..." (Identifikation) oder "Dieser..." (Qualität)?</p>
+        
+        <div class="input-group">
+            <p>Satz: <b>Это вкусный торт.</b> (Das ist eine leckere Torte.)</p>
+            <select data-answer="ident">
+                <option value="">-- Bedeutung wählen --</option>
+                <option value="ident">Das ist ein... (Identifikation)</option>
+                <option value="quali">Dieser... (Qualität)</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <p>Satz: <b>Этот торт вкусный.</b> (Diese Torte ist lecker.)</p>
+            <select data-answer="quali">
+                <option value="">-- Bedeutung wählen --</option>
+                <option value="ident">Das ist ein... (Identifikation)</option>
+                <option value="quali">Dieser... (Qualität)</option>
+            </select>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex9')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex9')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex9')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 10: Dialog Lückentext -->
+    <div class="exercise" id="ex10">
+        <span class="exercise-title">Aufgabe 10: Dialog ergänzen</span>
+        <p>Vervollständigen Sie den Dialog mit den passenden Pronomen.</p>
+        <div class="input-group" style="display:block;">
+            <p>
+                - Was ist das? <br>
+                - <select data-answer="это">
+                    <option value="">...</option>
+                    <option value="этот">этот</option>
+                    <option value="эта">эта</option>
+                    <option value="это">это</option>
+                    <option value="эти">эти</option>
+                </select> мой новый компьютер.
+            </p>
+            <p>
+                - Und <select data-answer="этот">
+                    <option value="">...</option>
+                    <option value="этот">этот</option>
+                    <option value="эта">эта</option>
+                    <option value="это">это</option>
+                    <option value="эти">эти</option>
+                </select> компьютер хороший? <br>
+                - Ja, sehr gut.
+            </p>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex10')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex10')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex10')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 11: Endungen erkennen -->
+    <div class="exercise" id="ex11">
+        <span class="exercise-title">Aufgabe 11: Endungen zuordnen</span>
+        <p>Schauen Sie auf die Endung des Adjektivs, um das richtige Pronomen zu finden.</p>
+        <div class="input-group">
+            <select data-answer="эти">
+                <option value="">-- ? --</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>старые (alte) дома. (Plural)</span>
+        </div>
+         <div class="input-group">
+            <select data-answer="этот">
+                <option value="">-- ? --</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+            </select>
+            <span>новый (neuer) друг. (Maskulinum)</span>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex11')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex11')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex11')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 12: Fehler finden -->
+    <div class="exercise" id="ex12">
+        <span class="exercise-title">Aufgabe 12: Fehlerkorrektur</span>
+        <p>Der Satz "Diese Lampe ist neu" wurde falsch übersetzt: "<i>Это лампа новая</i>". Wählen Sie die korrekte Form für das erste Wort.</p>
+        <div class="input-group">
+            <select data-answer="эта">
+                <option value="">...</option>
+                <option value="этот">этот</option>
+                <option value="эта">эта</option>
+                <option value="это">это</option>
+                <option value="эти">эти</option>
+            </select>
+            <span>лампа новая.</span>
+        </div>
+
+        <div class="feedback"></div>
+        <div class="btn-container">
+            <button class="btn-check" onclick="checkSelects('ex12')">Überprüfen</button>
+            <button class="btn-reset" onclick="resetSelects('ex12')">Zurücksetzen</button>
+            <button class="btn-solve" onclick="showSolutionSelects('ex12')">Lösung anzeigen</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    /* --- Allgemeine Hilfsfunktionen --- */
+
+    function setFeedback(elementId, message, type) {
+        const exercise = document.getElementById(elementId);
+        const feedback = exercise.querySelector('.feedback');
+        feedback.textContent = message;
+        feedback.className = 'feedback ' + type;
+    }
+
+    /* --- Logik für Dropdown (Select) Menüs --- */
+    function checkSelects(exId) {
+        const container = document.getElementById(exId);
+        const selects = container.querySelectorAll('select');
+        let allCorrect = true;
+
+        selects.forEach(select => {
+            if (select.value === select.getAttribute('data-answer')) {
+                select.classList.add('correct');
+                select.classList.remove('wrong');
+            } else {
+                select.classList.add('wrong');
+                select.classList.remove('correct');
+                allCorrect = false;
+            }
+        });
+
+        if (allCorrect) {
+            setFeedback(exId, "Richtig ausgewählt!", "success");
+        } else {
+            setFeedback(exId, "Versuche es noch einmal.", "error");
+        }
+    }
+
+    function resetSelects(exId) {
+        const container = document.getElementById(exId);
+        const selects = container.querySelectorAll('select');
+        selects.forEach(select => {
+            select.selectedIndex = 0;
+            select.classList.remove('correct', 'wrong');
+        });
+        setFeedback(exId, "", "");
+    }
+
+    function showSolutionSelects(exId) {
+        const container = document.getElementById(exId);
+        const selects = container.querySelectorAll('select');
+        selects.forEach(select => {
+            select.value = select.getAttribute('data-answer');
+            select.classList.remove('wrong');
+            select.classList.add('correct');
+        });
+        setFeedback(exId, "Lösung angezeigt.", "success");
+    }
+
+    /* --- Logik für Drag & Drop (Aufgabe 7) --- */
+    function allowDrop(ev) {
+        ev.preventDefault();
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        // Finde die Dropzone (könnte das h4 sein, also hochgehen zum parent)
+        let target = ev.target;
+        while (!target.classList.contains('dropzone') && target.parentElement) {
+            target = target.parentElement;
+        }
+        
+        if (target.classList.contains('dropzone')) {
+            var data = ev.dataTransfer.getData("text");
+            var draggedElement = document.getElementById(data);
+            target.appendChild(draggedElement);
+        }
+    }
+
+    function checkDragDrop(exId) {
+        const container = document.getElementById(exId);
+        const dropzones = container.querySelectorAll('.dropzone');
+        let allCorrect = true;
+        let itemsPlaced = 0;
+
+        dropzones.forEach(zone => {
+            const expectedCat = zone.getAttribute('data-cat');
+            const items = zone.querySelectorAll('.draggable');
+            
+            // Zurücksetzen für neuen Check
+            zone.classList.remove('correct', 'wrong');
+
+            if (items.length > 0) {
+                itemsPlaced += items.length;
+                let zoneCorrect = true;
+                items.forEach(item => {
+                    if (item.getAttribute('data-cat') !== expectedCat) {
+                        zoneCorrect = false;
+                    }
+                });
+
+                if (zoneCorrect) {
+                    zone.classList.add('correct');
+                } else {
+                    zone.classList.add('wrong');
+                    allCorrect = false;
+                }
+            }
+        });
+
+        if (itemsPlaced < 4) {
+            setFeedback(exId, "Bitte ordne alle Wörter zu.", "error");
+        } else if (allCorrect) {
+            setFeedback(exId, "Perfekt zugeordnet!", "success");
+        } else {
+            setFeedback(exId, "Einige Zuordnungen sind falsch.", "error");
+        }
+    }
+
+    function resetDragDrop(exId) {
+        const container = document.getElementById(exId);
+        const origin = container.querySelector('.draggables');
+        const items = container.querySelectorAll('.draggable');
+        const dropzones = container.querySelectorAll('.dropzone');
+        
+        // Alle Items zurück in den Startcontainer
+        items.forEach(item => {
+            origin.appendChild(item);
+        });
+
+        // Styles entfernen
+        dropzones.forEach(zone => {
+            zone.classList.remove('correct', 'wrong');
+        });
+        setFeedback(exId, "", "");
+    }
+
+    function showSolutionDragDrop(exId) {
+        resetDragDrop(exId); // Erst zurücksetzen
+        const container = document.getElementById(exId);
+        const items = container.querySelectorAll('.draggable');
+        const dropzones = container.querySelectorAll('.dropzone');
+        
+        items.forEach(item => {
+            const cat = item.getAttribute('data-cat');
+            // Finde passende Dropzone
+            dropzones.forEach(zone => {
+                if(zone.getAttribute('data-cat') === cat) {
+                    zone.appendChild(item);
+                    zone.classList.add('correct');
+                }
+            });
+        });
+        setFeedback(exId, "Lösung angezeigt.", "success");
+    }
+
+    /* --- Logik für Radio Buttons (Aufgabe 8) --- */
+    function checkRadio(exId) {
+        const container = document.getElementById(exId);
+        const selected = container.querySelector('input[name="ex8-radio"]:checked');
+        
+        if (!selected) {
+            setFeedback(exId, "Bitte wähle eine Option.", "error");
+            return;
+        }
+
+        if (selected.value === 'correct') {
+            setFeedback(exId, "Richtig! 'Квартира' ist weiblich (эта).", "success");
+        } else {
+            setFeedback(exId, "Leider falsch.", "error");
+        }
+    }
+
+    function resetRadio(exId) {
+        const container = document.getElementById(exId);
+        const radios = container.querySelectorAll('input[type="radio"]');
+        radios.forEach(r => {
+            r.checked = false;
+            r.parentElement.classList.remove('correct', 'wrong'); // Falls Klassen gesetzt wurden
+        });
+        setFeedback(exId, "", "");
+    }
+
+    function showSolutionRadio(exId, correctIndex) {
+        const container = document.getElementById(exId);
+        const radios = container.querySelectorAll('input[type="radio"]');
+        // Index 1 (0-based) ist die zweite Option im HTML code oben (ex8-opt2)
+        radios[correctIndex].checked = true;
+        setFeedback(exId, "Lösung angezeigt.", "success");
+    }
+
+</script>
+
+</body>
+</html>
