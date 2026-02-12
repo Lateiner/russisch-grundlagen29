@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Quick-Quiz: Das ist vs. Dieser</title>
+    <style>
+        :root {
+            --primary: #2196F3; /* Blau */
+            --bg-color: #eef2f5;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-sec: #7f8c8d;
+            --btn-left: #FF9800; /* Orange für Option A */
+            --btn-right: #9C27B0; /* Lila für Option B */
+            --success: #2ecc71;
+            --error: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--text-main);
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Volle Höhe auf Mobile */
+            max-height: 800px;
+        }
+
+        /* Kopfzeile mit Fortschritt */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Die Frage-Karte */
+        .card-area {
+            flex: 1; /* Nimmt den verfügbaren Platz ein */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            width: 100%;
+            padding: 40px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .russian-text {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .gap {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            display: inline-block;
+            min-width: 50px;
+        }
+
+        .german-text {
+            font-size: 1.1em;
+            color: var(--text-sec);
+            font-style: italic;
+        }
+
+        .hint {
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #999;
+            background: #f9f9f9;
+            padding: 5px 10px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        /* Die Antwort-Buttons */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .choice-btn {
+            flex: 1;
+            padding: 25px 10px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .choice-btn:active {
+            transform: scale(0.96);
+        }
+
+        /* Style für linke/rechte Option */
+        .btn-left { background: linear-gradient(135deg, #FF9800, #F57C00); }
+        .btn-right { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+
+        /* Feedback-Zustände */
+        .card.correct { border-color: var(--success); background-color: #f0fdf4; }
+        .card.wrong { border-color: var(--error); background-color: #fef2f2; }
+
+        /* Animationen */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .shake { animation: shake 0.4s ease-in-out; }
+
+        /* End Screen */
+        .end-screen {
+            display: none;
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        button.restart-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        /* Responsive Anpassungen */
+        @media (min-width: 600px) {
+            .game-container { justify-content: center; }
+            .card { padding: 60px 40px; }
+            .choice-btn { font-size: 1.8em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    
+    <!-- Header -->
+    <div class="header" id="game-header">
+        <h2>Entscheide schnell!</h2>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Karte -->
+    <div class="card-area" id="game-area">
+        <div class="card" id="question-card">
+            <span class="russian-text" id="ru-text"><span class="gap">___</span> дом.</span>
+            <span class="german-text" id="de-text">Das ist ein Haus.</span>
+            <div class="hint" id="grammar-hint">Identifikation (Wer ist das?)</div>
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="controls" id="controls">
+        <button class="choice-btn btn-left" id="btn-left" onclick="handleAnswer(0)">Это</button>
+        <button class="choice-btn btn-right" id="btn-right" onclick="handleAnswer(1)">Этот</button>
+    </div>
+
+    <!-- End Screen -->
+    <div class="end-screen" id="end-screen">
+        <h1>Geschafft!</h1>
+        <p>Dein Ergebnis: <span id="score-display" style="font-weight:bold; font-size:1.5em"></span></p>
+        <p id="feedback-message"></p>
+        <button class="restart-btn" onclick="restartGame()">Nochmal spielen</button>
+    </div>
+
+</div>
+
+<script>
+    /* 
+       Datenstruktur:
+       ru: Der russische Satz mit '___'
+       de: Die deutsche Übersetzung (entscheidend für den Kontext)
+       options: [Option Links, Option Rechts]
+       correctIndex: 0 für Links, 1 für Rechts
+       hint: Kurze Erklärung (Identifikation vs. Attribut)
+    */
+    const questions = [
+        {
+            ru: "___ дом.",
+            de: "Das ist ein Haus.",
+            options: ["Это", "Этот"],
+            correctIndex: 0,
+            hint: "Identifikation: 'Das ist ein...'"
+        },
+        {
+            ru: "___ дом старый.",
+            de: "Dieses Haus ist alt.",
+            options: ["Это", "Этот"],
+            correctIndex: 1,
+            hint: "Attribut: 'Dieses...' (Bezug auf Haus/Maskulin)"
+        },
+        {
+            ru: "___ лампа.",
+            de: "Das ist eine Lampe.",
+            options: ["Это", "Эта"],
+            correctIndex: 0,
+            hint: "Identifikation: 'Das ist eine...'"
+        },
+        {
+            ru: "___ лампа новая.",
+            de: "Diese Lampe ist neu.",
+            options: ["Это", "Эта"],
+            correctIndex: 1,
+            hint: "Attribut: 'Diese...' (Bezug auf Lampe/Feminin)"
+        },
+        {
+            ru: "___ книги.",
+            de: "Das sind Bücher.",
+            options: ["Это", "Эти"],
+            correctIndex: 0,
+            hint: "Identifikation: Auch im Plural immer 'Eto'!"
+        },
+        {
+            ru: "___ книги интересные.",
+            de: "Diese Bücher sind interessant.",
+            options: ["Это", "Эти"],
+            correctIndex: 1,
+            hint: "Attribut: 'Diese...' (Plural)"
+        },
+        {
+            ru: "___ окно.",
+            de: "Das ist ein Fenster.",
+            options: ["Это", "Этот"],
+            correctIndex: 0,
+            hint: "Identifikation: 'Das ist ein...'"
+        },
+        {
+            ru: "___ девушка красивая.",
+            de: "Diese junge Frau ist schön.",
+            options: ["Эта", "Это"], // Achtung: Reihenfolge getauscht
+            correctIndex: 0,
+            hint: "Attribut: 'Diese...' (Feminin)"
+        },
+        {
+            ru: "___ мои друзья.",
+            de: "Das sind meine Freunde.",
+            options: ["Эти", "Это"],
+            correctIndex: 1,
+            hint: "Identifikation: 'Das sind...' = Eto"
+        },
+        {
+            ru: "___ стол белый.",
+            de: "Dieser Tisch ist weiß.",
+            options: ["Этот", "Это"],
+            correctIndex: 0,
+            hint: "Attribut: 'Dieser...' (Maskulin)"
+        }
+    ];
+
+    let currentQIndex = 0;
+    let score = 0;
+    let canClick = true;
+
+    // DOM Elemente
+    const ruText = document.getElementById('ru-text');
+    const deText = document.getElementById('de-text');
+    const grammarHint = document.getElementById('grammar-hint');
+    const btnLeft = document.getElementById('btn-left');
+    const btnRight = document.getElementById('btn-right');
+    const card = document.getElementById('question-card');
+    const progressFill = document.getElementById('progress-fill');
+    
+    // Screens
+    const header = document.getElementById('game-header');
+    const gameArea = document.getElementById('game-area');
+    const controls = document.getElementById('controls');
+    const endScreen = document.getElementById('end-screen');
+
+    function initGame() {
+        currentQIndex = 0;
+        score = 0;
+        canClick = true;
+        
+        // UI Reset
+        header.style.display = 'block';
+        gameArea.style.display = 'flex';
+        controls.style.display = 'flex';
+        endScreen.style.display = 'none';
+        
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = questions[currentQIndex];
+        
+        // Reset Styles
+        card.className = 'card';
+        canClick = true;
+
+        // Content setzen
+        // Das Lückenwort wird durch Span ersetzt
+        ruText.innerHTML = q.ru.replace('___', '<span class="gap">___</span>');
+        deText.textContent = q.de;
+        grammarHint.textContent = "?"; // Hint erst nach Antwort anzeigen? Oder gleich? Hier: Versteckt lassen bis Antwort
+        grammarHint.style.visibility = 'hidden'; 
+
+        // Buttons beschriften
+        btnLeft.textContent = q.options[0];
+        btnRight.textContent = q.options[1];
+
+        // Progress Bar
+        const percent = (currentQIndex / questions.length) * 100;
+        progressFill.style.width = percent + '%';
+    }
+
+    function handleAnswer(selectedIndex) {
+        if (!canClick) return;
+        canClick = false;
+
+        const q = questions[currentQIndex];
+        const isCorrect = (selectedIndex === q.correctIndex);
+
+        // Feedback Logik
+        if (isCorrect) {
+            score++;
+            card.classList.add('correct');
+            // Lücke füllen
+            ruText.innerHTML = q.ru.replace('___', `<span style="color:var(--success)">${q.options[q.correctIndex]}</span>`);
+        } else {
+            card.classList.add('wrong');
+            card.classList.add('shake');
+            ruText.innerHTML = q.ru.replace('___', `<span style="color:var(--error); text-decoration:line-through">${q.options[selectedIndex]}</span> <span style="color:var(--success)">${q.options[q.correctIndex]}</span>`);
+        }
+
+        // Erklärung anzeigen
+        grammarHint.textContent = q.hint;
+        grammarHint.style.visibility = 'visible';
+
+        // Verzögerung vor nächster Frage
+        setTimeout(() => {
+            currentQIndex++;
+            if (currentQIndex < questions.length) {
+                loadQuestion();
+            } else {
+                showEndScreen();
+            }
+        }, 2000); // 2 Sekunden Zeit zum Lesen der Lösung/Erklärung
+    }
+
+    function showEndScreen() {
+        header.style.display = 'none';
+        gameArea.style.display = 'none';
+        controls.style.display = 'none';
+        endScreen.style.display = 'block';
+
+        const scoreEl = document.getElementById('score-display');
+        const msgEl = document.getElementById('feedback-message');
+        
+        scoreEl.textContent = `${score} von ${questions.length}`;
+
+        if (score === questions.length) {
+            msgEl.textContent = "Perfekt! Du bist ein Profi.";
+            msgEl.style.color = "var(--success)";
+        } else if (score > questions.length / 2) {
+            msgEl.textContent = "Gut gemacht! Fast alles richtig.";
+            msgEl.style.color = "orange";
+        } else {
+            msgEl.textContent = "Übe noch ein bisschen weiter.";
+            msgEl.style.color = "var(--error)";
+        }
+    }
+
+    function restartGame() {
+        initGame();
+    }
+
+    // Start
+    initGame();
+
+</script>
+
+</body>
+</html>
