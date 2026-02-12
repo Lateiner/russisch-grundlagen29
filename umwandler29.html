@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Russisch: Der Umwandler</title>
+    <style>
+        :root {
+            --primary: #673ab7;       /* Deep Purple */
+            --primary-light: #d1c4e9;
+            --accent: #ff4081;        /* Pink */
+            --bg-color: #ede7f6;
+            --card-bg: #ffffff;
+            --text: #333;
+            --success: #4caf50;
+            --error: #f44336;
+            --radius: 16px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .header h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
+        .progress-bar {
+            height: 6px;
+            background: #d1c4e9;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Die Hauptkarte */
+        .machine-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 500px;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sektion 1: Ausgangssatz */
+        .section-original {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px dashed #ccc;
+        }
+
+        .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .sentence-orig {
+            font-size: 1.2rem;
+            color: #555;
+            font-style: italic;
+        }
+
+        /* Sektion 2: Der "Transformator" (Pfeil & Anweisung) */
+        .section-transform {
+            padding: 15px;
+            text-align: center;
+            background: linear-gradient(to bottom, #f5f5f5, white);
+            position: relative;
+        }
+
+        .transform-badge {
+            display: inline-block;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        .swap-instruction {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .arrow-down {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-top: 5px;
+            animation: bounce 2s infinite;
+        }
+
+        /* Sektion 3: Ziel-Satz mit Lücke */
+        .section-target {
+            padding: 30px 20px;
+            text-align: center;
+            background: white;
+        }
+
+        .sentence-target {
+            font-size: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Die Lücke */
+        .gap-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
+            height: 45px;
+            background: #fff;
+            border: 3px solid var(--primary);
+            border-radius: 8px;
+            color: var(--primary);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 0 rgba(103, 58, 183, 0.2);
+        }
+
+        .gap-box.active {
+            background: var(--primary-light);
+            transform: scale(1.05);
+        }
+
+        .gap-box.correct {
+            border-color: var(--success);
+            background-color: #e8f5e9;
+            color: var(--success);
+            box-shadow: none;
+        }
+
+        .gap-box.wrong {
+            border-color: var(--error);
+            background-color: #ffebee;
+            color: var(--error);
+            animation: shake 0.4s;
+        }
+
+        /* Keypad Bereich */
+        .keypad-area {
+            background: #fafafa;
+            padding: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .keypad-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .key-btn {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text);
+            cursor: pointer;
+            box-shadow: 0 4px 0 #ddd;
+            transition: transform 0.1s;
+        }
+
+        .key-btn:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        
+        .key-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        /* Feedback & Controls */
+        .feedback-msg {
+            text-align: center;
+            height: 24px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .ctrl-btn {
+            background: none;
+            border: none;
+            color: #777;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 10px;
+        }
+        
+        .btn-next {
+            background-color: var(--accent);
+            color: white;
+            text-decoration: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Neuer Restart Button Style */
+        .btn-restart {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .btn-restart:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        /* End Screen */
+        .end-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            height: 100%;
+            min-height: 400px;
+        }
+        .end-screen h2 { color: var(--success); font-size: 2rem; }
+
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Der Umwandler</h1>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+    </div>
+</div>
+
+<div class="machine-card" id="game-card">
+    
+    <!-- 1. Ausgangssatz -->
+    <div class="section-original">
+        <span class="label">Originalsatz</span>
+        <div class="sentence-orig" id="orig-sentence">Lade...</div>
+        <div style="font-size:0.85rem; color:#888; margin-top:5px;" id="orig-trans">...</div>
+    </div>
+
+    <!-- 2. Transformation -->
+    <div class="section-transform">
+        <div class="transform-badge">Austausch</div>
+        <div class="swap-instruction">
+            Ersetze <b id="word-old" style="text-decoration: line-through; color:#999;">...</b> durch <b id="word-new" style="color:var(--accent); font-size:1.2rem;">...</b>
+        </div>
+        <div class="arrow-down">⬇</div>
+    </div>
+
+    <!-- 3. Neuer Satz -->
+    <div class="section-target">
+        <span class="label">Neuer Satz</span>
+        <div class="sentence-target">
+            <div class="gap-box" id="gap-box">?</div>
+            <span id="rest-sentence">...</span>
+        </div>
+    </div>
+
+    <!-- 4. Keypad -->
+    <div class="keypad-area">
+        <div class="feedback-msg" id="feedback"></div>
+        
+        <div class="keypad-grid">
+            <button class="key-btn" onclick="checkAnswer('Этот')">Этот</button>
+            <button class="key-btn" onclick="checkAnswer('Эта')">Эта</button>
+            <button class="key-btn" onclick="checkAnswer('Это')">Это</button>
+            <button class="key-btn" onclick="checkAnswer('Эти')">Эти</button>
+        </div>
+
+        <div class="controls">
+            <div>
+                <button class="ctrl-btn" onclick="resetTask()">Reset</button>
+                <button class="ctrl-btn" onclick="showSolution()">Lösung</button>
+            </div>
+            <button class="btn-next" id="btn-next" onclick="nextTask()">Weiter &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- End Screen (wird angezeigt wenn fertig) -->
+<div class="machine-card end-screen" id="end-screen">
+    <h2>Mission erfüllt!</h2>
+    <p>Du hast alle Sätze erfolgreich umgewandelt.</p>
+    <br><br>
+    <button class="btn-restart" onclick="restartGame()">Neustart</button>
+</div>
+
+<script>
+    /*
+      Datenstruktur der Aufgaben
+    */
+    const tasks = [
+        {
+            origSentence: "Этот дом старый.",
+            origTrans: "Dieses Haus ist alt.",
+            oldWord: "дом",
+            newWord: "квартира",
+            sentenceEnd: "квартира старая.",
+            correctPronoun: "Эта"
+        },
+        {
+            origSentence: "Эта ручка новая.",
+            origTrans: "Dieser Stift ist neu.",
+            oldWord: "ручка",
+            newWord: "карандаш",
+            sentenceEnd: "карандаш новый.",
+            correctPronoun: "Этот"
+        },
+        {
+            origSentence: "Это письмо интересное.",
+            origTrans: "Dieser Brief ist interessant.",
+            oldWord: "письмо",
+            newWord: "книги",
+            sentenceEnd: "книги интересные.",
+            correctPronoun: "Эти"
+        },
+        {
+            origSentence: "Этот студент хороший.",
+            origTrans: "Dieser Student ist gut.",
+            oldWord: "студент",
+            newWord: "студентка",
+            sentenceEnd: "студентка хорошая.",
+            correctPronoun: "Эта"
+        },
+        {
+            origSentence: "Эти журналы дорогие.",
+            origTrans: "Diese Zeitschriften sind teuer.",
+            oldWord: "журналы",
+            newWord: "платье",
+            sentenceEnd: "платье дорогое.",
+            correctPronoun: "Это"
+        },
+        {
+            origSentence: "Эта машина быстрая.",
+            origTrans: "Dieses Auto ist schnell.",
+            oldWord: "машина",
+            newWord: "автобус",
+            sentenceEnd: "автобус быстрый.",
+            correctPronoun: "Этот"
+        }
+    ];
+
+    let currentIndex = 0;
+    let isSolved = false;
+
+    // DOM Elemente
+    const gameCard = document.getElementById('game-card');
+    const endScreen = document.getElementById('end-screen');
+    const origSentenceEl = document.getElementById('orig-sentence');
+    const origTransEl = document.getElementById('orig-trans');
+    const wordOldEl = document.getElementById('word-old');
+    const wordNewEl = document.getElementById('word-new');
+    const gapBox = document.getElementById('gap-box');
+    const restSentenceEl = document.getElementById('rest-sentence');
+    const feedbackEl = document.getElementById('feedback');
+    const btnNext = document.getElementById('btn-next');
+    const progressFill = document.getElementById('progress-fill');
+
+    function initGame() {
+        currentIndex = 0;
+        loadTask();
+    }
+
+    function loadTask() {
+        const t = tasks[currentIndex];
+        isSolved = false;
+
+        // Reset UI
+        gapBox.textContent = "?";
+        gapBox.className = "gap-box"; 
+        feedbackEl.textContent = "";
+        btnNext.style.display = "none";
+        
+        // Buttons aktivieren
+        document.querySelectorAll('.key-btn').forEach(b => b.disabled = false);
+
+        // Content füllen
+        origSentenceEl.textContent = t.origSentence;
+        origTransEl.textContent = t.origTrans;
+        wordOldEl.textContent = t.oldWord;
+        wordNewEl.textContent = t.newWord;
+        restSentenceEl.textContent = t.sentenceEnd;
+
+        updateProgress();
+    }
+
+    function checkAnswer(selected) {
+        if (isSolved) return;
+
+        const t = tasks[currentIndex];
+        
+        if (selected === t.correctPronoun) {
+            // Richtig
+            isSolved = true;
+            gapBox.textContent = selected;
+            gapBox.className = "gap-box correct";
+            feedbackEl.textContent = "Richtig! (Geschlecht angepasst)";
+            feedbackEl.style.color = "var(--success)";
+            
+            btnNext.style.display = "block";
+            
+            // Keypad deaktivieren
+            document.querySelectorAll('.key-btn').forEach(b => b.disabled = true);
+        } else {
+            // Falsch
+            gapBox.textContent = selected;
+            gapBox.className = "gap-box wrong";
+            
+            // Animation reset
+            void gapBox.offsetWidth; 
+            
+            feedbackEl.textContent = "Falsch. Achte auf das neue Wort!";
+            feedbackEl.style.color = "var(--error)";
+        }
+    }
+
+    function nextTask() {
+        currentIndex++;
+        if (currentIndex < tasks.length) {
+            loadTask();
+        } else {
+            // Ende: Karte ausblenden, End-Screen einblenden
+            gameCard.style.display = "none";
+            endScreen.style.display = "flex";
+            progressFill.style.width = "100%";
+        }
+    }
+
+    function resetTask() {
+        // Setzt nur die aktuelle Aufgabe zurück
+        loadTask();
+    }
+
+    function showSolution() {
+        const t = tasks[currentIndex];
+        checkAnswer(t.correctPronoun);
+        feedbackEl.textContent = "Lösung angezeigt.";
+        feedbackEl.style.color = "orange";
+    }
+
+    function restartGame() {
+        // Setzt das ganze Spiel zurück
+        endScreen.style.display = "none";
+        gameCard.style.display = "flex";
+        currentIndex = 0;
+        loadTask();
+    }
+
+    function updateProgress() {
+        const pct = (currentIndex / tasks.length) * 100;
+        progressFill.style.width = pct + "%";
+    }
+
+    // Start
+    window.onload = initGame;
+
+</script>
+
+</body>
+</html>
