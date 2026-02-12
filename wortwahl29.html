@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Quiz: Demonstrativpronomen</title>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333;
+            --success: #4caf50;
+            --error: #f44336;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 600px; /* Optimal für Lesbarkeit auf Desktop */
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            padding: 30px;
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+        }
+
+        .progress-info {
+            text-align: center;
+            color: #777;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        /* Die Frage-Karte */
+        .question-card {
+            background-color: #e8eaf6;
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .gap {
+            display: inline-block;
+            min-width: 60px;
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .translation {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.8em;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Das Antwort-Raster (Responsive) */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Desktop: 2 Spalten */
+            gap: 15px;
+        }
+
+        /* Smartphone-Ansicht: Alles untereinander für große Buttons */
+        @media (max-width: 500px) {
+            .options-grid {
+                grid-template-columns: 1fr; /* Mobile: 1 Spalte */
+            }
+            
+            .quiz-container {
+                padding: 15px;
+            }
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #ddd;
+            padding: 15px;
+            border-radius: var(--radius);
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            background-color: #f5f7fa;
+        }
+
+        /* Zustände für Richtig/Falsch */
+        .option-btn.correct {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .option-btn.wrong {
+            background-color: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+
+        /* Navigation */
+        .nav-area {
+            margin-top: 25px;
+            text-align: center;
+            height: 50px; /* Platzhalterhöhe */
+        }
+
+        .next-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 1em;
+            cursor: pointer;
+            display: none; /* Erst unsichtbar */
+        }
+
+        .next-btn:hover {
+            opacity: 0.9;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h2>Wähle das passende Wort</h2>
+    <div class="progress-info" id="progress">Frage 1 von 10</div>
+
+    <!-- Hier wird die Frage dynamisch eingefügt -->
+    <div id="quiz-content">
+        <div class="question-card">
+            <span id="question-text">___ стол тут.</span>
+            <span class="translation" id="translation-text">(Dieser Tisch ist hier.)</span>
+        </div>
+
+        <div class="options-grid" id="options-area">
+            <!-- Buttons werden hier per JS generiert -->
+        </div>
+    </div>
+
+    <div class="nav-area">
+        <button class="next-btn" id="next-btn" onclick="nextQuestion()">Nächste Frage &rarr;</button>
+    </div>
+</div>
+
+<script>
+    // Datenbank der Fragen
+    const questions = [
+        {
+            text: "___ стол стоит тут.",
+            trans: "Dieser Tisch steht hier.",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 0 // Index des richtigen Arrays (0 = Этот)
+        },
+        {
+            text: "___ лампа новая.",
+            trans: "Diese Lampe ist neu.",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 1
+        },
+        {
+            text: "___ окно большое.",
+            trans: "Dieses Fenster ist groß.",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 2
+        },
+        {
+            text: "___ книги интересные.",
+            trans: "Diese Bücher sind interessant.",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 3
+        },
+        {
+            text: "___ мой папа.",
+            trans: "Das ist mein Papa. (Identifikation)",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 2 // Das unveränderliche Eto
+        },
+        {
+            text: "___ девушка красивая.",
+            trans: "Diese junge Frau ist schön.",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 1
+        },
+        {
+            text: "___ журнал старый.",
+            trans: "Diese Zeitschrift ist alt.",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 0
+        },
+        {
+            text: "___ очки дорогие.",
+            trans: "Diese Brille ist teuer. (Pluralwort)",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 3
+        },
+        {
+            text: "___ новые дома.",
+            trans: "Das sind neue Häuser. (Identifikation)",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 2 // Eto bleibt Eto bei 'Das sind...'
+        },
+        {
+            text: "___ море синее.",
+            trans: "Dieses Meer ist blau.",
+            options: ["Этот", "Эта", "Это", "Эти"],
+            correct: 2
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let isAnswered = false;
+
+    const questionEl = document.getElementById("question-text");
+    const transEl = document.getElementById("translation-text");
+    const optionsArea = document.getElementById("options-area");
+    const nextBtn = document.getElementById("next-btn");
+    const progressEl = document.getElementById("progress");
+
+    function loadQuestion() {
+        isAnswered = false;
+        nextBtn.style.display = "none";
+        optionsArea.innerHTML = ""; // Alte Buttons löschen
+
+        const currentQ = questions[currentQuestionIndex];
+        
+        // Frage anzeigen (Lücke visualisieren)
+        // Wir ersetzen '___' durch ein gestyltes Element, falls gewünscht, oder lassen es so.
+        questionEl.innerHTML = currentQ.text.replace("___", "<span class='gap'>...</span>");
+        transEl.textContent = `(${currentQ.trans})`;
+        progressEl.textContent = `Frage ${currentQuestionIndex + 1} von ${questions.length}`;
+
+        // Buttons generieren
+        currentQ.options.forEach((opt, index) => {
+            const btn = document.createElement("button");
+            btn.className = "option-btn";
+            btn.textContent = opt;
+            btn.onclick = () => checkAnswer(index, btn);
+            optionsArea.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selectedIndex, selectedBtn) {
+        if (isAnswered) return; // Verhindert mehrfaches Klicken
+        isAnswered = true;
+
+        const currentQ = questions[currentQuestionIndex];
+        const buttons = optionsArea.querySelectorAll(".option-btn");
+
+        if (selectedIndex === currentQ.correct) {
+            // Richtig
+            selectedBtn.classList.add("correct");
+        } else {
+            // Falsch
+            selectedBtn.classList.add("wrong");
+            // Richtigen Button grün markieren
+            buttons[currentQ.correct].classList.add("correct");
+        }
+
+        // Weiter-Button anzeigen
+        if (currentQuestionIndex < questions.length - 1) {
+            nextBtn.textContent = "Nächste Frage →";
+            nextBtn.style.display = "inline-block";
+        } else {
+            nextBtn.textContent = "Quiz beenden (Neustart)";
+            nextBtn.style.display = "inline-block";
+        }
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+        } else {
+            // Quiz Ende - Neustart
+            currentQuestionIndex = 0;
+            loadQuestion();
+        }
+    }
+
+    // Start
+    loadQuestion();
+
+</script>
+
+</body>
+</html>
