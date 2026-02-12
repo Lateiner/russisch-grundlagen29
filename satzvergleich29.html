@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Russisch: Satzvergleich (Erweitert)</title>
+    <style>
+        :root {
+            --primary: #1976D2;       /* Blau */
+            --accent: #FF9800;        /* Orange */
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text: #333;
+            --success: #4CAF50;
+            --error: #F44336;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
+        .header p { color: #666; font-size: 0.95rem; max-width: 600px; margin: 10px auto 0; }
+
+        /* Container für alle Paare */
+        .pairs-wrapper {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        /* Desktop: 2 Spalten */
+        @media (min-width: 800px) {
+            .pairs-wrapper {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Die Karte für ein Paar */
+        .pair-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            padding: 20px;
+            border-left: 5px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pair-card h3 {
+            margin: 0 0 15px 0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #999;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Ein einzelner Satz innerhalb des Paares */
+        .sentence-row {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .sentence-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .ru-text {
+            font-size: 1.25rem;
+            margin-bottom: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .de-text {
+            font-size: 0.85rem;
+            color: #777;
+            font-style: italic;
+        }
+
+        /* Die Lücke (Platzhalter) */
+        .gap-placeholder {
+            display: inline-block;
+            min-width: 60px;
+            height: 30px;
+            border-bottom: 2px solid #ccc;
+            text-align: center;
+            color: var(--primary);
+            font-weight: bold;
+            margin-right: 5px;
+            transition: all 0.3s;
+        }
+
+        /* Auswahl-Buttons unter dem Satz */
+        .options-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .opt-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            flex: 1; /* Buttons nehmen gleich viel Platz ein */
+            max-width: 100px;
+            text-align: center;
+        }
+
+        .opt-btn:hover {
+            background-color: #e3f2fd;
+            border-color: var(--primary);
+        }
+
+        /* Feedback Styles */
+        .opt-btn.correct {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .opt-btn.wrong {
+            background-color: var(--error);
+            color: white;
+            border-color: var(--error);
+            opacity: 0.5;
+        }
+
+        /* Wenn gelöst, Lücke füllen */
+        .gap-placeholder.filled-correct {
+            border-bottom-color: var(--success);
+            color: var(--success);
+            position: relative;
+        }
+        
+        /* Disable interaction after correct choice */
+        .sentence-row.solved {
+            pointer-events: none;
+        }
+        .sentence-row.solved .options-container {
+            opacity: 0.5; /* Ausblenden der Buttons nach Lösung */
+            height: 0;
+            margin: 0;
+            overflow: hidden;
+            transition: height 0.5s ease;
+        }
+
+        /* Badge für Grammatik-Info */
+        .badge {
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: auto;
+            background: #eee;
+            color: #555;
+        }
+
+        /* Footer Reset */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-bottom: 40px;
+        }
+
+        .btn-reset {
+            background-color: #607D8B;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Der feine Unterschied</h1>
+    <p>Vergleiche die Sätze. Wann nutzen wir das angepasste Pronomen (Dieser...) und wann das unveränderliche (Das ist...)?</p>
+</div>
+
+<div class="pairs-wrapper">
+
+    <!-- PAAR 1: Männlich -->
+    <div class="pair-card">
+        <h3>Paar 1: Maskulinum (Haus)</h3>
+        
+        <!-- Satz 1A -->
+        <div class="sentence-row" id="s1a">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap1a">...</span> дом старый.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's1a', 'gap1a', 'Этот', 'Этот')">Этот</button>
+                <button class="opt-btn" onclick="check(this, 's1a', 'gap1a', 'Это', 'Этот')">Это</button>
+            </div>
+            <div class="de-text">Dieser Haus ist alt. (Beschreibung)</div>
+        </div>
+
+        <!-- Satz 1B -->
+        <div class="sentence-row" id="s1b">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap1b">...</span> старый дом.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's1b', 'gap1b', 'Этот', 'Это')">Этот</button>
+                <button class="opt-btn" onclick="check(this, 's1b', 'gap1b', 'Это', 'Это')">Это</button>
+            </div>
+            <div class="de-text">Das ist ein altes Haus. (Identifikation)</div>
+        </div>
+    </div>
+
+    <!-- PAAR 2: Weiblich -->
+    <div class="pair-card">
+        <h3>Paar 2: Femininum (Lampe)</h3>
+        
+        <!-- Satz 2A -->
+        <div class="sentence-row" id="s2a">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap2a">...</span> лампа новая.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's2a', 'gap2a', 'Это', 'Эта')">Это</button>
+                <button class="opt-btn" onclick="check(this, 's2a', 'gap2a', 'Эта', 'Эта')">Эта</button>
+            </div>
+            <div class="de-text">Diese Lampe ist neu. (Beschreibung)</div>
+        </div>
+
+        <!-- Satz 2B -->
+        <div class="sentence-row" id="s2b">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap2b">...</span> новая лампа.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's2b', 'gap2b', 'Это', 'Это')">Это</button>
+                <button class="opt-btn" onclick="check(this, 's2b', 'gap2b', 'Эта', 'Это')">Эта</button>
+            </div>
+            <div class="de-text">Das ist eine neue Lampe. (Identifikation)</div>
+        </div>
+    </div>
+
+    <!-- PAAR 3: Plural -->
+    <div class="pair-card">
+        <h3>Paar 3: Plural (Bücher) <span class="badge">Wichtig!</span></h3>
+        
+        <!-- Satz 3A -->
+        <div class="sentence-row" id="s3a">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap3a">...</span> книги интересные.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's3a', 'gap3a', 'Эти', 'Эти')">Эти</button>
+                <button class="opt-btn" onclick="check(this, 's3a', 'gap3a', 'Это', 'Эти')">Это</button>
+            </div>
+            <div class="de-text">Diese Bücher sind interessant.</div>
+        </div>
+
+        <!-- Satz 3B -->
+        <div class="sentence-row" id="s3b">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap3b">...</span> интересные книги.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's3b', 'gap3b', 'Эти', 'Это')">Эти</button>
+                <button class="opt-btn" onclick="check(this, 's3b', 'gap3b', 'Это', 'Это')">Это</button>
+            </div>
+            <div class="de-text">Das sind interessante Bücher. (Auch Plural = Eto!)</div>
+        </div>
+    </div>
+
+    <!-- PAAR 4: Maskulinum (Person) -->
+    <div class="pair-card">
+        <h3>Paar 4: Person (Student)</h3>
+        
+        <!-- Satz 4A -->
+        <div class="sentence-row" id="s4a">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap4a">...</span> студент умный.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's4a', 'gap4a', 'Это', 'Этот')">Это</button>
+                <button class="opt-btn" onclick="check(this, 's4a', 'gap4a', 'Этот', 'Этот')">Этот</button>
+            </div>
+            <div class="de-text">Dieser Student ist klug.</div>
+        </div>
+
+        <!-- Satz 4B -->
+        <div class="sentence-row" id="s4b">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap4b">...</span> умный студент.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's4b', 'gap4b', 'Это', 'Это')">Это</button>
+                <button class="opt-btn" onclick="check(this, 's4b', 'gap4b', 'Этот', 'Это')">Этот</button>
+            </div>
+            <div class="de-text">Das ist ein kluger Student.</div>
+        </div>
+    </div>
+
+    <!-- NEU: PAAR 5: Neutrum -->
+    <div class="pair-card">
+        <h3>Paar 5: Neutrum (Fenster)</h3>
+        
+        <!-- Satz 5A -->
+        <div class="sentence-row" id="s5a">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap5a">...</span> окно чистое.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's5a', 'gap5a', 'Это', 'Это')">Это</button>
+                <button class="opt-btn" onclick="check(this, 's5a', 'gap5a', 'Этот', 'Это')">Этот</button>
+            </div>
+            <div class="de-text">Dieses Fenster ist sauber. (Neutrum = Eto)</div>
+        </div>
+
+        <!-- Satz 5B -->
+        <div class="sentence-row" id="s5b">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap5b">...</span> чистое окно.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's5b', 'gap5b', 'Это', 'Это')">Это</button>
+                <button class="opt-btn" onclick="check(this, 's5b', 'gap5b', 'Эта', 'Это')">Эта</button>
+            </div>
+            <div class="de-text">Das ist ein sauberes Fenster. (Identifikation)</div>
+        </div>
+        <!-- Kleiner Hinweis, weil beide Antworten 'Eto' sind, aber grammatikalisch unterschiedlich -->
+        <div style="font-size:0.8rem; color:#999; margin-top:5px; font-style:italic;">
+            Hinweis: Im Neutrum sind beide Formen (Qualität & Identifikation) gleich ("Это").
+        </div>
+    </div>
+
+    <!-- NEU: PAAR 6: Plural (Freunde) -->
+    <div class="pair-card">
+        <h3>Paar 6: Plural (Freunde) <span class="badge">Falle!</span></h3>
+        
+        <!-- Satz 6A -->
+        <div class="sentence-row" id="s6a">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap6a">...</span> люди здесь.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's6a', 'gap6a', 'Эти', 'Эти')">Эти</button>
+                <button class="opt-btn" onclick="check(this, 's6a', 'gap6a', 'Это', 'Эти')">Это</button>
+            </div>
+            <div class="de-text">Diese Leute sind hier. (Attribut)</div>
+        </div>
+
+        <!-- Satz 6B -->
+        <div class="sentence-row" id="s6b">
+            <div class="ru-text">
+                <span class="gap-placeholder" id="gap6b">...</span> мои друзья.
+            </div>
+            <div class="options-container">
+                <button class="opt-btn" onclick="check(this, 's6b', 'gap6b', 'Эти', 'Это')">Эти</button>
+                <button class="opt-btn" onclick="check(this, 's6b', 'gap6b', 'Это', 'Это')">Это</button>
+            </div>
+            <div class="de-text">Das sind meine Freunde. (Identifikation Plural!)</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <button class="btn-reset" onclick="resetAll()">Alles zurücksetzen</button>
+</div>
+
+<script>
+    function check(btn, rowId, gapId, value, correctAnswer) {
+        const row = document.getElementById(rowId);
+        const gap = document.getElementById(gapId);
+        
+        if (value === correctAnswer) {
+            // Richtig
+            btn.classList.add('correct');
+            gap.textContent = value;
+            gap.classList.add('filled-correct');
+            
+            // Verzögerung, dann Buttons ausblenden für saubere Optik
+            setTimeout(() => {
+                row.classList.add('solved');
+            }, 300);
+            
+        } else {
+            // Falsch
+            btn.classList.add('wrong');
+            // Shake Effect am Button
+            btn.style.animation = 'shake 0.4s';
+            setTimeout(() => btn.style.animation = '', 400);
+        }
+    }
+
+    function resetAll() {
+        // Entferne Klassen und setze Text zurück
+        document.querySelectorAll('.opt-btn').forEach(btn => {
+            btn.classList.remove('correct', 'wrong');
+        });
+
+        document.querySelectorAll('.sentence-row').forEach(row => {
+            row.classList.remove('solved');
+        });
+
+        document.querySelectorAll('.gap-placeholder').forEach(gap => {
+            gap.textContent = '...';
+            gap.classList.remove('filled-correct');
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+
+<style>
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+</style>
+
+</body>
+</html>
