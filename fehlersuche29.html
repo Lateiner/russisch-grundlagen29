@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Russisch: Der Fehlerteufel (10 Sätze)</title>
+    <style>
+        :root {
+            --primary: #d32f2f;       /* Rot (Korrektur-Farbe) */
+            --primary-light: #ffcdd2;
+            --bg-color: #fafafa;
+            --card-bg: #ffffff;
+            --text: #333;
+            --success: #388e3c;
+            --correct-btn: #4caf50;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+
+        /* Flexbox Header für Titel und Zähler */
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .header h1 { 
+            color: var(--primary); 
+            margin: 0; 
+            font-size: 1.5rem; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+        }
+
+        /* Der neue Zähler */
+        .counter-badge {
+            background-color: #eee;
+            color: #555;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Die "Papier"-Karte */
+        .editor-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 600px;
+            min-height: 300px;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            padding: 30px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        /* Linien-Hintergrund für Papier-Look */
+        .editor-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 40px; bottom: 0;
+            border-left: 1px solid #ffcdd2;
+            pointer-events: none;
+        }
+
+        .task-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding-left: 30px; /* Platz wegen roter Linie */
+        }
+
+        .instruction {
+            font-size: 0.9rem;
+            color: #777;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sentence-display {
+            font-size: 1.6rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        /* Das fehlerhafte Wort */
+        .target-word {
+            position: relative;
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        /* Rote Wellenlinie wie in Word */
+        .target-word.suspicious {
+            text-decoration: underline;
+            text-decoration-style: wavy;
+            text-decoration-color: var(--primary);
+            text-decoration-thickness: 2px;
+        }
+        
+        /* Aktiver Zustand beim Bearbeiten */
+        .target-word.active {
+            background-color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        /* Korrigierter Zustand */
+        .target-word.corrected {
+            color: var(--success);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .target-word.corrected::after {
+            content: '✓';
+            font-size: 0.6em;
+            vertical-align: super;
+            margin-left: 5px;
+        }
+
+        .translation {
+            font-size: 1rem;
+            color: #888;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        /* Feedback Nachricht */
+        .feedback-area {
+            min-height: 40px;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            display: none;
+        }
+        .feedback-area.error { background: #ffebee; color: var(--primary); display: block; }
+        .feedback-area.success { background: #e8f5e9; color: var(--success); display: block; }
+
+        /* Eingabebereich (Keyboard) */
+        .input-panel {
+            width: 100%;
+            max-width: 600px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        @media(min-width: 500px) {
+            .input-panel { grid-template-columns: repeat(5, 1fr); }
+        }
+
+        .choice-btn {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px 5px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 2px 0 #ddd;
+            transition: transform 0.1s;
+        }
+
+        .choice-btn:active { transform: translateY(2px); box-shadow: none; }
+
+        /* Der Button "Ist Richtig" */
+        .btn-is-correct {
+            background-color: var(--correct-btn);
+            color: white;
+            border: none;
+            border-bottom: 3px solid #388e3c;
+        }
+        
+        .btn-next {
+            grid-column: 1 / -1;
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* End Screen */
+        .end-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+        }
+        .btn-restart {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-top">
+        <h1>📝 Der Fehlerteufel</h1>
+        <div class="counter-badge" id="counter-badge">1 / 10</div>
+    </div>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+</div>
+
+<div class="editor-card" id="game-card">
+    <div class="task-content">
+        <div class="instruction">Korrigiere den Fehler (oder bestätige, falls richtig)</div>
+        
+        <div class="sentence-display">
+            <span id="part-1"></span>
+            <span id="target-word" class="target-word suspicious">...</span>
+            <span id="part-2"></span>
+        </div>
+        
+        <div class="translation" id="translation">...</div>
+        
+        <div class="feedback-area" id="feedback"></div>
+    </div>
+</div>
+
+<div class="input-panel" id="input-panel">
+    <button class="choice-btn" onclick="checkAnswer('Этот')">Этот</button>
+    <button class="choice-btn" onclick="checkAnswer('Эта')">Эта</button>
+    <button class="choice-btn" onclick="checkAnswer('Это')">Это</button>
+    <button class="choice-btn" onclick="checkAnswer('Эти')">Эти</button>
+    
+    <button class="choice-btn btn-is-correct" onclick="checkAnswer('CORRECT')">✔ Richtig</button>
+    
+    <button class="btn-next" id="btn-next" onclick="nextTask()">Nächster Satz &rarr;</button>
+</div>
+
+<!-- End Screen -->
+<div class="editor-card end-screen" id="end-screen">
+    <h2 style="color:var(--success)">Korrektur beendet!</h2>
+    <p>Du hast alle 10 Sätze überprüft.</p>
+    <p id="score-text" style="font-weight:bold; font-size:1.2rem; margin:15px 0;">0 Fehler gemacht.</p>
+    <button class="btn-restart" onclick="restartGame()">Neustart</button>
+</div>
+
+<script>
+    /*
+     Datenbank mit 10 Sätzen
+    */
+    const tasks = [
+        {
+            pre: "",
+            displayed: "Эта",
+            post: "дом большой.",
+            correct: "Этот",
+            trans: "Dieses Haus ist groß. (Haus = maskulin)",
+            isCorrect: false
+        },
+        {
+            pre: "",
+            displayed: "Этот",
+            post: "лампа новая.",
+            correct: "Эта",
+            trans: "Diese Lampe ist neu. (Lampe = feminin)",
+            isCorrect: false
+        },
+        {
+            pre: "",
+            displayed: "Это",
+            post: "письмо для тебя.",
+            correct: "Это",
+            trans: "Dieser Brief ist für dich. (Neutrum - Satz war schon richtig!)",
+            isCorrect: true
+        },
+        {
+            pre: "",
+            displayed: "Этот",
+            post: "книги интересные.",
+            correct: "Эти",
+            trans: "Diese Bücher sind interessant. (Plural)",
+            isCorrect: false
+        },
+        {
+            pre: "",
+            displayed: "Этот",
+            post: "мой папа.",
+            correct: "Это",
+            trans: "Das ist mein Papa. (Identifikation = immer 'Eto')",
+            isCorrect: false
+        },
+        {
+            pre: "",
+            displayed: "Эта",
+            post: "моя мама.",
+            correct: "Это",
+            trans: "Das ist meine Mama. (Identifikation = immer 'Eto')",
+            isCorrect: false
+        },
+        {
+            pre: "",
+            displayed: "Эти",
+            post: "дети играют.",
+            correct: "Эти",
+            trans: "Diese Kinder spielen. (Satz war schon richtig!)",
+            isCorrect: true
+        },
+        {
+            pre: "",
+            displayed: "Это",
+            post: "студент умный.",
+            correct: "Этот",
+            trans: "Dieser Student ist klug. (Betonung auf 'Dieser')",
+            isCorrect: false
+        },
+        {
+            pre: "",
+            displayed: "Эта",
+            post: "окно открыто.",
+            correct: "Это",
+            trans: "Dieses Fenster ist offen. (Fenster = neutrum)",
+            isCorrect: false
+        },
+        {
+            pre: "",
+            displayed: "Эти",
+            post: "мои друзья.",
+            correct: "Это",
+            trans: "Das sind meine Freunde. (Identifikation 'Das sind...' = immer 'Eto')",
+            isCorrect: false
+        }
+    ];
+
+    let currentIndex = 0;
+    let mistakes = 0;
+    let isTaskActive = true;
+
+    // DOM Elements
+    const part1 = document.getElementById('part-1');
+    const part2 = document.getElementById('part-2');
+    const targetWord = document.getElementById('target-word');
+    const transEl = document.getElementById('translation');
+    const feedbackEl = document.getElementById('feedback');
+    const btnNext = document.getElementById('btn-next');
+    const gameCard = document.getElementById('game-card');
+    const endScreen = document.getElementById('end-screen');
+    const inputPanel = document.getElementById('input-panel');
+    const progressFill = document.getElementById('progress-bar');
+    const counterBadge = document.getElementById('counter-badge');
+
+    function initGame() {
+        currentIndex = 0;
+        mistakes = 0;
+        loadTask();
+        gameCard.style.display = 'flex';
+        endScreen.style.display = 'none';
+        inputPanel.style.display = 'grid';
+    }
+
+    function loadTask() {
+        const t = tasks[currentIndex];
+        isTaskActive = true;
+        
+        // Zähler aktualisieren
+        counterBadge.textContent = (currentIndex + 1) + " / " + tasks.length;
+        
+        // UI Reset
+        part1.textContent = t.pre + (t.pre ? " " : "");
+        part2.textContent = " " + t.post;
+        
+        targetWord.textContent = t.displayed;
+        targetWord.className = "target-word suspicious"; // Reset style
+        
+        transEl.textContent = t.trans;
+        transEl.style.visibility = 'hidden'; // Erst zeigen nach Lösung
+        
+        feedbackEl.className = "feedback-area"; // Hide
+        feedbackEl.textContent = "";
+        
+        btnNext.style.display = 'none';
+        
+        // Buttons wieder aktivieren
+        const buttons = document.querySelectorAll('.choice-btn');
+        buttons.forEach(b => {
+            b.disabled = false;
+            b.style.opacity = "1";
+        });
+        
+        updateProgress();
+    }
+
+    function checkAnswer(selected) {
+        if (!isTaskActive) return;
+
+        const t = tasks[currentIndex];
+        let correct = false;
+
+        if (selected === 'CORRECT') {
+            if (t.isCorrect) {
+                correct = true;
+                feedbackEl.textContent = "Stimmt! Der Satz war fehlerfrei.";
+            } else {
+                feedbackEl.textContent = "Nein, hier versteckt sich ein Fehler!";
+                mistakes++;
+            }
+        } else {
+            // User hat ein Wort gewählt
+            if (selected === t.correct) {
+                if (t.isCorrect) {
+                    correct = true;
+                    feedbackEl.textContent = "Richtig! (Der Satz war bereits korrekt).";
+                } else {
+                    correct = true;
+                    feedbackEl.textContent = "Gut korrigiert!";
+                }
+            } else {
+                feedbackEl.textContent = "Leider falsch.";
+                mistakes++;
+            }
+        }
+
+        if (correct) {
+            handleSuccess(t.correct);
+        } else {
+            handleError();
+        }
+    }
+
+    function handleSuccess(correctWord) {
+        isTaskActive = false;
+        
+        // Visuelles Update
+        targetWord.textContent = correctWord;
+        targetWord.className = "target-word corrected";
+        
+        feedbackEl.className = "feedback-area success";
+        transEl.style.visibility = 'visible';
+        
+        // Buttons deaktivieren
+        const buttons = document.querySelectorAll('.choice-btn');
+        buttons.forEach(b => {
+            b.disabled = true;
+            b.style.opacity = "0.5";
+        });
+
+        btnNext.style.display = 'block';
+    }
+
+    function handleError() {
+        feedbackEl.className = "feedback-area error";
+        
+        // Shake Animation
+        gameCard.animate([
+            { transform: 'translateX(0)' },
+            { transform: 'translateX(-10px)' },
+            { transform: 'translateX(10px)' },
+            { transform: 'translateX(0)' }
+        ], {
+            duration: 400
+        });
+    }
+
+    function nextTask() {
+        currentIndex++;
+        if (currentIndex < tasks.length) {
+            loadTask();
+        } else {
+            showEndScreen();
+        }
+    }
+
+    function showEndScreen() {
+        gameCard.style.display = 'none';
+        inputPanel.style.display = 'none';
+        endScreen.style.display = 'flex';
+        progressFill.style.width = '100%';
+        
+        const scoreText = document.getElementById('score-text');
+        if (mistakes === 0) {
+            scoreText.textContent = "Perfekt! 0 Fehler.";
+            scoreText.style.color = "var(--success)";
+        } else {
+            scoreText.textContent = `Du hast ${mistakes} Fehler gemacht.`;
+            scoreText.style.color = "#555";
+        }
+    }
+
+    function restartGame() {
+        initGame();
+    }
+
+    function updateProgress() {
+        // Fortschrittsbalken relativ zum Index
+        const pct = (currentIndex / tasks.length) * 100;
+        progressFill.style.width = pct + "%";
+    }
+
+    // Start
+    window.onload = initGame;
+
+</script>
+
+</body>
+</html>
