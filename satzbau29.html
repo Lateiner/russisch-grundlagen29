@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Russisch: Satzbau-Trainer</title>
+    <style>
+        :root {
+            --primary: #00897b;       /* Teal */
+            --primary-dark: #00695c;
+            --bg-color: #e0f2f1;
+            --card-bg: #ffffff;
+            --text: #333;
+            --success: #43a047;
+            --error: #e53935;
+            --word-bg: #ffffff;
+            --word-border: #b2dfdb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .header h1 { color: var(--primary-dark); margin: 0 0 10px 0; font-size: 1.5rem; }
+        .progress-bar {
+            height: 6px;
+            background: #b2dfdb;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Hauptkarte */
+        .game-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 700px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 25px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-height: 400px;
+        }
+
+        /* Der deutsche Satz */
+        .task-area {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed #eee;
+        }
+
+        .de-sentence {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #444;
+            margin-bottom: 5px;
+        }
+
+        .hint-text {
+            font-size: 0.9rem;
+            color: #888;
+            font-style: italic;
+        }
+
+        /* Bereich für die Antwort (Dropzone) */
+        .answer-area {
+            background-color: #f5f5f5;
+            border-radius: 12px;
+            min-height: 80px;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center; /* Zentriert die Wörter */
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .answer-area.correct {
+            border-color: var(--success);
+            background-color: #e8f5e9;
+        }
+
+        .answer-area.wrong {
+            border-color: var(--error);
+            background-color: #ffebee;
+            animation: shake 0.4s;
+        }
+
+        /* Bereich für die verfügbaren Wörter (Bank) */
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 10px 0;
+            min-height: 60px;
+        }
+
+        /* Die Wort-Bausteine */
+        .word-btn {
+            background: white;
+            border: 2px solid var(--word-border);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: all 0.2s;
+            user-select: none;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .word-btn:active {
+            transform: scale(0.95);
+        }
+
+        .word-btn:hover {
+            border-color: var(--primary);
+        }
+
+        /* Leerer Platzhaltertext wenn Antwortbereich leer */
+        .placeholder-text {
+            color: #bbb;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        /* Controls */
+        .controls {
+            margin-top: auto;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding-top: 10px;
+        }
+
+        .btn {
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: opacity 0.2s;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-check { background-color: var(--primary); }
+        .btn-next { background-color: var(--primary-dark); display: none; } /* Erst unsichtbar */
+        .btn-reset { background-color: #90a4ae; font-size: 0.9rem; padding: 12px 15px;}
+        .btn-solution { background-color: #ffb74d; font-size: 0.9rem; padding: 12px 15px;}
+
+        /* Animationen */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .word-enter {
+            animation: popIn 0.2s ease-out;
+        }
+
+        /* Success Screen */
+        .end-screen {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .end-screen h2 { color: var(--success); }
+
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Satzbau-Trainer</h1>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+    </div>
+</div>
+
+<div class="game-card" id="game-area">
+    
+    <!-- Aufgabe -->
+    <div class="task-area">
+        <div class="de-sentence" id="de-text">Lade Aufgabe...</div>
+        <div class="hint-text" id="hint-text">Tippe die Wörter in der richtigen Reihenfolge an.</div>
+    </div>
+
+    <!-- Antwortbereich -->
+    <div class="answer-area" id="answer-area" onclick="returnWordToBank()">
+        <span class="placeholder-text" id="placeholder">Hier klicken Wörter erscheinen...</span>
+    </div>
+
+    <!-- Wortbank -->
+    <div class="word-bank" id="word-bank">
+        <!-- Wörter werden hier generiert -->
+    </div>
+
+    <!-- Feedback Nachricht -->
+    <div id="feedback-msg" style="text-align:center; height:24px; font-weight:bold;"></div>
+
+    <!-- Buttons -->
+    <div class="controls">
+        <button class="btn btn-reset" onclick="resetCurrentTask()">Reset</button>
+        <button class="btn btn-check" id="btn-check" onclick="checkAnswer()">Prüfen</button>
+        <button class="btn btn-solution" onclick="showSolution()">Lösung</button>
+        <button class="btn btn-next" id="btn-next" onclick="nextTask()">Weiter &rarr;</button>
+    </div>
+
+</div>
+
+<div class="game-card end-screen" id="end-screen">
+    <h2>Super gemacht!</h2>
+    <p>Du hast alle Sätze richtig gebaut.</p>
+    <p>Du hast den Unterschied zwischen "Dieser..." und "Das ist..." gemeistert.</p>
+    <button class="btn btn-check" onclick="location.reload()">Neustart</button>
+</div>
+
+<script>
+    /*
+     Datenbank der Satzpaare.
+     WICHTIG: Die Sätze sind so gewählt, dass der Unterschied in der Struktur deutlich wird.
+     Wir verwenden einfache Nominativ-Strukturen.
+    */
+    const tasks = [
+        // Paar 1: Maskulinum (Student)
+        {
+            de: "Dieser Student ist neu.",
+            ru: "Этот студент новый", // Wörter werden gesplittet
+            hint: "Struktur: [Pronomen] [Substantiv] [Adjektiv]."
+        },
+        {
+            de: "Das ist ein neuer Student.",
+            ru: "Это новый студент",
+            hint: "Struktur: [Das ist] [Adjektiv] [Substantiv]."
+        },
+        // Paar 2: Femininum (Lampe)
+        {
+            de: "Diese Lampe ist teuer.",
+            ru: "Эта лампа дорогая",
+            hint: "Struktur: 'Lampa' ist weiblich."
+        },
+        {
+            de: "Das ist eine teure Lampe.",
+            ru: "Это дорогая лампа",
+            hint: "Identifikation: Unveränderliches 'Eto'."
+        },
+        // Paar 3: Plural (Bücher)
+        {
+            de: "Diese Bücher sind alt.",
+            ru: "Эти книги старые",
+            hint: "Plural: Wir beschreiben die Bücher."
+        },
+        {
+            de: "Das sind alte Bücher.",
+            ru: "Это старые книги",
+            hint: "Plural Identifikation: 'Das sind' = Eto."
+        },
+        // Paar 4: Neutrum (Fenster)
+        {
+            de: "Dieses Fenster ist sauber.",
+            ru: "Это окно чистое",
+            hint: "Neutrum: Pronomen passt sich an."
+        },
+        {
+            de: "Das ist ein sauberes Fenster.",
+            ru: "Это чистое окно",
+            hint: "Struktur: Wortstellung beachten!"
+        }
+    ];
+
+    let currentTaskIndex = 0;
+    let currentWords = []; // Wörter in der Antwortzone
+    let bankWords = [];    // Wörter in der Bank
+
+    // DOM Elemente
+    const deText = document.getElementById('de-text');
+    const hintText = document.getElementById('hint-text');
+    const answerArea = document.getElementById('answer-area');
+    const wordBank = document.getElementById('word-bank');
+    const placeholder = document.getElementById('placeholder');
+    const feedbackMsg = document.getElementById('feedback-msg');
+    const btnCheck = document.getElementById('btn-check');
+    const btnNext = document.getElementById('btn-next');
+    const progressFill = document.getElementById('progress-fill');
+
+    function initGame() {
+        currentTaskIndex = 0;
+        loadTask();
+    }
+
+    function loadTask() {
+        const task = tasks[currentTaskIndex];
+        
+        // UI Reset
+        deText.textContent = task.de;
+        hintText.textContent = task.hint;
+        feedbackMsg.textContent = "";
+        feedbackMsg.style.color = "#333";
+        answerArea.className = "answer-area";
+        placeholder.style.display = "block";
+        btnCheck.style.display = "inline-block";
+        btnNext.style.display = "none";
+        
+        // Wörter vorbereiten
+        // Wir nehmen den korrekten Satz und splitten ihn
+        // Optional: Man könnte falsche Distraktoren hinzufügen, aber für den Anfang reicht reines Ordnen.
+        let words = task.ru.split(" ");
+        
+        // Wörter mischen
+        words = shuffleArray(words);
+        
+        currentWords = [];
+        bankWords = words.map((w, i) => ({ text: w, id: i })); // ID für eindeutige Zuordnung
+
+        renderWords();
+        updateProgress();
+    }
+
+    function renderWords() {
+        // 1. Antwortbereich rendern
+        answerArea.innerHTML = "";
+        if (currentWords.length === 0) {
+            answerArea.appendChild(placeholder);
+        } else {
+            currentWords.forEach(wordObj => {
+                const btn = createWordBtn(wordObj, true); // true = in answer area
+                answerArea.appendChild(btn);
+            });
+        }
+
+        // 2. Bank rendern
+        wordBank.innerHTML = "";
+        bankWords.forEach(wordObj => {
+            const btn = createWordBtn(wordObj, false); // false = in bank
+            wordBank.appendChild(btn);
+        });
+    }
+
+    function createWordBtn(wordObj, isAnswerArea) {
+        const btn = document.createElement("div");
+        btn.className = "word-btn word-enter";
+        btn.textContent = wordObj.text;
+        
+        btn.onclick = function() {
+            // Wenn Aufgabe schon gelöst (grün), keine Interaktion mehr
+            if(answerArea.classList.contains('correct')) return;
+
+            if (isAnswerArea) {
+                // Zurück zur Bank
+                moveWordToBank(wordObj);
+            } else {
+                // In die Antwortzone
+                moveWordToAnswer(wordObj);
+            }
+        };
+        return btn;
+    }
+
+    function moveWordToAnswer(wordObj) {
+        // Entferne aus Bank
+        bankWords = bankWords.filter(w => w.id !== wordObj.id);
+        // Füge zu Antwort hinzu
+        currentWords.push(wordObj);
+        
+        // Reset Feedback styles wenn man weiterbaut
+        answerArea.classList.remove('wrong');
+        feedbackMsg.textContent = "";
+        
+        renderWords();
+    }
+
+    function moveWordToBank(wordObj) {
+        // Entferne aus Antwort
+        currentWords = currentWords.filter(w => w.id !== wordObj.id);
+        // Füge zu Bank hinzu
+        bankWords.push(wordObj);
+        
+        answerArea.classList.remove('wrong');
+        feedbackMsg.textContent = "";
+
+        renderWords();
+    }
+
+    function checkAnswer() {
+        const task = tasks[currentTaskIndex];
+        
+        // Baue den Satz aus den aktuellen Wörtern
+        const constructedSentence = currentWords.map(w => w.text).join(" ");
+        const correctSentence = task.ru;
+
+        if (constructedSentence === correctSentence) {
+            // Richtig
+            answerArea.classList.add('correct');
+            answerArea.classList.remove('wrong');
+            feedbackMsg.textContent = "Richtig!";
+            feedbackMsg.style.color = "var(--success)";
+            
+            btnCheck.style.display = "none";
+            btnNext.style.display = "inline-block";
+        } else {
+            // Falsch
+            answerArea.classList.add('wrong');
+            feedbackMsg.textContent = "Das ist noch nicht ganz richtig.";
+            feedbackMsg.style.color = "var(--error)";
+        }
+    }
+
+    function showSolution() {
+        const task = tasks[currentTaskIndex];
+        const correctWords = task.ru.split(" ");
+        
+        // Arrays neu befüllen für Anzeige
+        currentWords = correctWords.map((w, i) => ({ text: w, id: i }));
+        bankWords = [];
+        
+        renderWords();
+        
+        // Als richtig markieren
+        answerArea.classList.add('correct');
+        answerArea.classList.remove('wrong');
+        feedbackMsg.textContent = "Lösung angezeigt.";
+        feedbackMsg.style.color = "#f57c00";
+        
+        btnCheck.style.display = "none";
+        btnNext.style.display = "inline-block";
+    }
+
+    function resetCurrentTask() {
+        // Einfach neu laden, dabei wird wieder gemischt
+        loadTask();
+    }
+
+    function nextTask() {
+        currentTaskIndex++;
+        if (currentTaskIndex < tasks.length) {
+            loadTask();
+        } else {
+            // Ende
+            document.getElementById('game-area').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+            updateProgress();
+        }
+    }
+
+    function updateProgress() {
+        const percent = (currentTaskIndex / tasks.length) * 100;
+        progressFill.style.width = percent + "%";
+    }
+
+    function shuffleArray(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex != 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [
+                array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    // Start
+    window.onload = initGame;
+
+</script>
+
+</body>
+</html>
