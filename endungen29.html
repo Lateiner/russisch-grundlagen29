@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Russisch: Endungen (Sofort-Feedback)</title>
+    <style>
+        :root {
+            --primary: #5c6bc0;
+            --primary-light: #e8eaf6;
+            --stem-color: #333;
+            --ending-placeholder: #e91e63;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --success: #4caf50;
+            --error: #f44336;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 220px; /* Platz für Footer */
+            color: #333;
+        }
+
+        /* Fixed Header */
+        .header {
+            background-color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-text h2 { margin: 0; font-size: 1.1rem; color: var(--primary); }
+        .header-text p { margin: 2px 0 0; font-size: 0.8rem; color: #666; }
+
+        .progress-badge {
+            background: var(--primary);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* Container */
+        .container {
+            max-width: 700px;
+            margin: 20px auto;
+            padding: 0 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Wort-Karte */
+        .word-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            border-left: 6px solid transparent;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+
+        /* Aktive Karte */
+        .word-card.active {
+            border-left-color: var(--primary);
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+
+        /* Gelöste Karte */
+        .word-card.solved {
+            border-left-color: var(--success);
+            opacity: 0.6; /* Etwas ausgrauen, da erledigt */
+        }
+
+        /* Der Satzbereich */
+        .sentence-row {
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* Konstruktion: Stamm + Lücke */
+        .word-construction {
+            display: inline-flex;
+            align-items: baseline;
+            background: #e8eaf6;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid #c5cae9;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .word-card.active .word-construction {
+            background: white;
+            border-color: var(--primary);
+        }
+
+        .stem {
+            font-weight: bold;
+            color: var(--stem-color);
+        }
+
+        .gap {
+            display: inline-block;
+            min-width: 35px;
+            border-bottom: 3px solid #ccc;
+            color: var(--ending-placeholder);
+            font-weight: bold;
+            text-align: center;
+            margin-left: 1px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .gap.empty::after {
+            content: '...';
+            color: #bbb;
+            font-size: 0.8em;
+        }
+
+        /* Feedback Zustände */
+        .gap.correct {
+            color: var(--success);
+            border-bottom-color: var(--success);
+        }
+
+        .gap.wrong {
+            color: var(--error);
+            border-bottom-color: var(--error);
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .translation {
+            font-size: 0.9rem;
+            color: #888;
+            font-style: italic;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+            margin-top: 5px;
+        }
+
+        /* Footer & Keyboard */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+            z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 8px;
+            background: #f9f9f9;
+            border-bottom: 1px solid #eee;
+        }
+
+        .btn-ctrl {
+            padding: 6px 15px;
+            border-radius: 15px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            font-size: 0.85rem;
+        }
+        .btn-reset { background-color: #78909c; }
+        .btn-solve { background-color: #ff9800; }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .key {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            font-size: 1.3rem;
+            font-weight: bold;
+            padding: 15px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.1s;
+            box-shadow: 0 4px 0 var(--primary); /* 3D Effekt */
+        }
+
+        .key:active {
+            transform: translateY(4px);
+            box-shadow: none;
+            background: #e8eaf6;
+        }
+
+        /* Success Overlay */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center; align-items: center;
+            z-index: 200;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+        }
+        .overlay h2 { font-size: 2rem; margin-bottom: 10px; color: var(--success); }
+        .btn-restart {
+            background: var(--primary); color: white; border: none;
+            padding: 15px 30px; border-radius: 30px; font-size: 1.2rem;
+            margin-top: 20px; cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-text">
+        <h2>Wortbaustelle</h2>
+        <p>Ergänze: <b>Эт...</b></p>
+    </div>
+    <div class="progress-badge" id="progress">0 / 8</div>
+</div>
+
+<div class="container">
+
+    <!-- 1. Maskulinum -->
+    <div class="word-card active" onclick="activateCard(this)">
+        <div class="sentence-row">
+            <div class="word-construction">
+                <span class="stem">Эт</span><span class="gap empty" data-answer="от"></span>
+            </div>
+            <span>дом большой.</span>
+        </div>
+        <div class="translation">Dieses Haus ist groß. (Maskulinum)</div>
+    </div>
+
+    <!-- 2. Femininum -->
+    <div class="word-card" onclick="activateCard(this)">
+        <div class="sentence-row">
+            <div class="word-construction">
+                <span class="stem">Эт</span><span class="gap empty" data-answer="а"></span>
+            </div>
+            <span>книга новая.</span>
+        </div>
+        <div class="translation">Dieses Buch ist neu. (Femininum)</div>
+    </div>
+
+    <!-- 3. Neutrum -->
+    <div class="word-card" onclick="activateCard(this)">
+        <div class="sentence-row">
+            <div class="word-construction">
+                <span class="stem">Эт</span><span class="gap empty" data-answer="о"></span>
+            </div>
+            <span>письмо тебе.</span>
+        </div>
+        <div class="translation">Dieser Brief ist für dich. (Neutrum)</div>
+    </div>
+
+    <!-- 4. Plural -->
+    <div class="word-card" onclick="activateCard(this)">
+        <div class="sentence-row">
+            <div class="word-construction">
+                <span class="stem">Эт</span><span class="gap empty" data-answer="и"></span>
+            </div>
+            <span>цветы красивые.</span>
+        </div>
+        <div class="translation">Diese Blumen sind schön. (Plural)</div>
+    </div>
+
+    <!-- 5. Identifikation (Das ist...) -->
+    <div class="word-card" onclick="activateCard(this)">
+        <div class="sentence-row">
+            <div class="word-construction">
+                <span class="stem">Эт</span><span class="gap empty" data-answer="о"></span>
+            </div>
+            <span>мой брат.</span>
+        </div>
+        <div class="translation">Das ist mein Bruder. (Identifikation)</div>
+    </div>
+
+    <!-- 6. Maskulinum -->
+    <div class="word-card" onclick="activateCard(this)">
+        <div class="sentence-row">
+            <div class="word-construction">
+                <span class="stem">Эт</span><span class="gap empty" data-answer="от"></span>
+            </div>
+            <span>стол старый.</span>
+        </div>
+        <div class="translation">Dieser Tisch ist alt. (Maskulinum)</div>
+    </div>
+
+    <!-- 7. Femininum -->
+    <div class="word-card" onclick="activateCard(this)">
+        <div class="sentence-row">
+            <div class="word-construction">
+                <span class="stem">Эт</span><span class="gap empty" data-answer="а"></span>
+            </div>
+            <span>лампа здесь.</span>
+        </div>
+        <div class="translation">Diese Lampe steht hier. (Femininum)</div>
+    </div>
+
+    <!-- 8. Plural -->
+    <div class="word-card" onclick="activateCard(this)">
+        <div class="sentence-row">
+            <div class="word-construction">
+                <span class="stem">Эт</span><span class="gap empty" data-answer="и"></span>
+            </div>
+            <span>дети играют.</span>
+        </div>
+        <div class="translation">Diese Kinder spielen. (Plural)</div>
+    </div>
+
+</div>
+
+<!-- Overlay bei Erfolg -->
+<div class="overlay" id="success-overlay">
+    <h2>Perfekt!</h2>
+    <p>Du hast alle 8 Endungen richtig zugeordnet.</p>
+    <button class="btn-restart" onclick="resetAll()">Neustart</button>
+</div>
+
+<!-- Footer mit Tastatur -->
+<div class="footer">
+    <div class="controls">
+        <button class="btn-ctrl btn-solve" onclick="solveAll()">Lösung anzeigen</button>
+        <button class="btn-ctrl btn-reset" onclick="resetAll()">Alles zurücksetzen</button>
+    </div>
+    <div class="keyboard">
+        <button class="key" onmousedown="typeEnding('от')">-от</button>
+        <button class="key" onmousedown="typeEnding('а')">-а</button>
+        <button class="key" onmousedown="typeEnding('о')">-о</button>
+        <button class="key" onmousedown="typeEnding('и')">-и</button>
+    </div>
+</div>
+
+<script>
+    let activeCardIndex = 0;
+    let solvedCount = 0;
+    const totalCount = 8;
+    
+    // Initialisierung
+    window.onload = function() {
+        highlightActiveCard();
+    };
+
+    function activateCard(cardElement) {
+        // Index finden
+        const allCards = Array.from(document.querySelectorAll('.word-card'));
+        activeCardIndex = allCards.indexOf(cardElement);
+        highlightActiveCard();
+    }
+
+    function highlightActiveCard() {
+        const allCards = document.querySelectorAll('.word-card');
+        allCards.forEach((card, index) => {
+            if (index === activeCardIndex) {
+                card.classList.add('active');
+                ensureVisible(card);
+            } else {
+                card.classList.remove('active');
+            }
+        });
+    }
+
+    function typeEnding(selectedEnding) {
+        const allCards = document.querySelectorAll('.word-card');
+        const currentCard = allCards[activeCardIndex];
+        const gap = currentCard.querySelector('.gap');
+        
+        // Wenn Karte schon gelöst ist, nichts tun (oder zur nächsten springen)
+        if (currentCard.classList.contains('solved')) {
+            if (activeCardIndex < totalCount - 1) {
+                activeCardIndex++;
+                highlightActiveCard();
+            }
+            return;
+        }
+
+        const correctAnswer = gap.getAttribute('data-answer');
+
+        // 1. Text einfüllen
+        gap.textContent = selectedEnding;
+        gap.classList.remove('empty');
+
+        // 2. SOFORTIGES FEEDBACK
+        if (selectedEnding === correctAnswer) {
+            // --- RICHTIG ---
+            gap.className = 'gap correct'; // Klasse setzen
+            currentCard.classList.add('solved');
+            
+            solvedCount++;
+            updateProgress();
+
+            // Automatisch weiter nach kurzer Verzögerung (damit man Grün sieht)
+            if (solvedCount < totalCount) {
+                setTimeout(() => {
+                    // Nächste ungelöste Karte suchen
+                    findNextUnsolved();
+                }, 400); // 400ms warten
+            } else {
+                // Fertig!
+                setTimeout(() => {
+                    document.getElementById('success-overlay').style.display = 'flex';
+                }, 500);
+            }
+
+        } else {
+            // --- FALSCH ---
+            gap.className = 'gap wrong';
+            
+            // Animation Reset Hack, damit es bei wiederholtem Fehler wieder wackelt
+            gap.style.animation = 'none';
+            gap.offsetHeight; /* trigger reflow */
+            gap.style.animation = null;
+
+            // Wir bleiben auf der Karte, damit der User es korrigieren kann
+        }
+    }
+
+    function findNextUnsolved() {
+        const allCards = document.querySelectorAll('.word-card');
+        let nextIndex = activeCardIndex + 1;
+        
+        // Suchen nach vorne
+        while (nextIndex < allCards.length) {
+            if (!allCards[nextIndex].classList.contains('solved')) {
+                activeCardIndex = nextIndex;
+                highlightActiveCard();
+                return;
+            }
+            nextIndex++;
+        }
+        
+        // Wenn nichts gefunden, von vorne suchen (falls User zurückgesprungen ist)
+        nextIndex = 0;
+        while (nextIndex < activeCardIndex) {
+            if (!allCards[nextIndex].classList.contains('solved')) {
+                activeCardIndex = nextIndex;
+                highlightActiveCard();
+                return;
+            }
+            nextIndex++;
+        }
+    }
+
+    function updateProgress() {
+        document.getElementById('progress').textContent = `${solvedCount} / ${totalCount}`;
+    }
+
+    function solveAll() {
+        const allCards = document.querySelectorAll('.word-card');
+        allCards.forEach(card => {
+            const gap = card.querySelector('.gap');
+            gap.textContent = gap.getAttribute('data-answer');
+            gap.className = 'gap correct';
+            card.classList.add('solved');
+        });
+        solvedCount = totalCount;
+        updateProgress();
+    }
+
+    function resetAll() {
+        const allCards = document.querySelectorAll('.word-card');
+        allCards.forEach(card => {
+            const gap = card.querySelector('.gap');
+            gap.textContent = '';
+            gap.className = 'gap empty';
+            card.classList.remove('solved');
+        });
+        
+        solvedCount = 0;
+        updateProgress();
+        activeCardIndex = 0;
+        highlightActiveCard();
+        
+        document.getElementById('success-overlay').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function ensureVisible(element) {
+        const rect = element.getBoundingClientRect();
+        const footerHeight = document.querySelector('.footer').offsetHeight;
+        const headerHeight = document.querySelector('.header').offsetHeight;
+        
+        // Wenn Element unter dem Footer versteckt ist
+        if (rect.bottom > window.innerHeight - footerHeight - 10) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        // Wenn Element unter dem Header versteckt ist
+        else if (rect.top < headerHeight + 10) {
+             element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }
+</script>
+
+</body>
+</html>
