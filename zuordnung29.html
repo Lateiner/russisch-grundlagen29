@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Drag & Drop: ЭТОТ, ЭТА, ЭТО, ЭТИ</title>
+    
+    <!-- WICHTIG: Polyfill für Touch-Geräte (ermöglicht Drag & Drop auf iOS/Android) -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #333;
+            --success: #4caf50; /* Grün */
+            --error: #f44336;   /* Rot */
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        p.instruction {
+            text-align: center;
+            color: #555;
+            margin-bottom: 30px;
+        }
+
+        /* --- Der "Pool" mit den Wörtern --- */
+        .source-container {
+            background: #e3f2fd;
+            border: 2px dashed #90caf9;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 100px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        /* Die Wort-Karten */
+        .draggable-item {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: grab;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .draggable-item:active {
+            cursor: grabbing;
+        }
+
+        .draggable-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            border-color: var(--primary);
+        }
+
+        .item-ru { font-size: 1.1em; font-weight: bold; }
+        .item-de { font-size: 0.8em; color: #777; font-style: italic; margin-top: 2px;}
+
+        /* Feedback-Farben für die Karten */
+        .draggable-item.valid { background-color: #e8f5e9; border-color: var(--success); border-width: 2px; }
+        .draggable-item.invalid { background-color: #ffebee; border-color: var(--error); border-width: 2px; }
+
+        /* --- Die Ziel-Container (Dropzones) --- */
+        .target-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* Desktop: 4 nebeneinander */
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .dropzone {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .dropzone.drag-over {
+            border-color: var(--primary);
+            background-color: #e8eaf6;
+        }
+
+        .zone-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .zone-content {
+            padding: 10px;
+            min-height: 150px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* --- Buttons --- */
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .btn-check { background-color: var(--success); color: white; }
+        .btn-reset { background-color: #757575; color: white; }
+        .btn-solve { background-color: #ff9800; color: white; }
+
+        /* Feedback Text */
+        #feedback-msg {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        /* --- RESPONSIVE DESIGN --- */
+        /* Tablet & kleine Laptops */
+        @media (max-width: 900px) {
+            .target-grid {
+                grid-template-columns: repeat(2, 1fr); /* 2x2 Grid */
+            }
+        }
+
+        /* Smartphone */
+        @media (max-width: 500px) {
+            body { padding: 10px; }
+            
+            .target-grid {
+                grid-template-columns: repeat(2, 1fr); /* Immer noch 2x2, aber kleiner */
+                gap: 10px;
+            }
+
+            .zone-header {
+                font-size: 0.9em;
+                padding: 8px;
+            }
+
+            .draggable-item {
+                padding: 6px 10px;
+                width: 100%; /* Karten füllen die Breite im Container */
+                box-sizing: border-box; 
+            }
+            
+            .source-container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Wort-Sortierung</h1>
+    <p class="instruction">Ziehen Sie die Substantive in die richtige Box! Achten Sie auf das Geschlecht und die Zahl.</p>
+
+    <!-- Der Start-Pool -->
+    <div id="source" class="source-container" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <!-- Wörter werden hier per JS eingefügt -->
+    </div>
+
+    <!-- Die Ziel-Boxen -->
+    <div class="target-grid">
+        <!-- Maskulinum -->
+        <div class="dropzone">
+            <div class="zone-header">ЭТОТ<br><small>(Männlich)</small></div>
+            <div class="zone-content" id="zone-m" data-target="m" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+        
+        <!-- Femininum -->
+        <div class="dropzone">
+            <div class="zone-header">ЭТА<br><small>(Weiblich)</small></div>
+            <div class="zone-content" id="zone-f" data-target="f" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+
+        <!-- Neutrum -->
+        <div class="dropzone">
+            <div class="zone-header">ЭТО<br><small>(Sächlich)</small></div>
+            <div class="zone-content" id="zone-n" data-target="n" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+
+        <!-- Plural -->
+        <div class="dropzone">
+            <div class="zone-header">ЭТИ<br><small>(Plural)</small></div>
+            <div class="zone-content" id="zone-pl" data-target="pl" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        </div>
+    </div>
+
+    <div class="btn-container">
+        <button class="btn-check" onclick="checkAnswers()">Überprüfen</button>
+        <button class="btn-reset" onclick="resetGame()">Neu starten</button>
+        <button class="btn-solve" onclick="showSolution()">Lösung</button>
+    </div>
+    
+    <div id="feedback-msg"></div>
+</div>
+
+<script>
+    // Datenbank der Wörter
+    const words = [
+        { ru: "стол", de: "Tisch", type: "m" },
+        { ru: "брат", de: "Bruder", type: "m" },
+        { ru: "компьютер", de: "Computer", type: "m" },
+        { ru: "лампа", de: "Lampe", type: "f" },
+        { ru: "мама", de: "Mama", type: "f" },
+        { ru: "книга", de: "Buch", type: "f" },
+        { ru: "окно", de: "Fenster", type: "n" },
+        { ru: "фото", de: "Foto", type: "n" },
+        { ru: "письмо", de: "Brief", type: "n" },
+        { ru: "люди", de: "Leute", type: "pl" },
+        { ru: "очки", de: "Brille", type: "pl" },
+        { ru: "дети", de: "Kinder", type: "pl" }
+    ];
+
+    const sourceContainer = document.getElementById('source');
+    const feedbackMsg = document.getElementById('feedback-msg');
+
+    // Initialisierung
+    function init() {
+        resetGame();
+    }
+
+    // Spiel zurücksetzen
+    function resetGame() {
+        sourceContainer.innerHTML = '';
+        feedbackMsg.textContent = '';
+        
+        // Zonen leeren
+        document.querySelectorAll('.zone-content').forEach(zone => zone.innerHTML = '');
+
+        // Wörter mischen
+        const shuffled = [...words].sort(() => 0.5 - Math.random());
+
+        // Elemente erstellen
+        shuffled.forEach((word, index) => {
+            const el = document.createElement('div');
+            el.className = 'draggable-item';
+            el.draggable = true;
+            el.id = 'word-' + index;
+            el.dataset.type = word.type; // Speichert den korrekten Typ (m, f, n, pl)
+            
+            // HTML Inhalt der Karte
+            el.innerHTML = `<span class="item-ru">${word.ru}</span><span class="item-de">${word.de}</span>`;
+            
+            // Event Listener hinzufügen
+            el.addEventListener('dragstart', drag);
+            
+            sourceContainer.appendChild(el);
+        });
+    }
+
+    /* --- Drag & Drop Logik --- */
+
+    function allowDrop(ev) {
+        ev.preventDefault();
+        // Visuelles Feedback beim Drüberziehen
+        let zone = ev.target.closest('.dropzone');
+        if (zone) zone.classList.add('drag-over');
+    }
+
+    // Beim Verlassen der Zone das Feedback entfernen (optional, hier einfachheitshalber weggelassen oder über CSS hover gelöst)
+    document.addEventListener('dragleave', function(ev) {
+        let zone = ev.target.closest('.dropzone');
+        if (zone) zone.classList.remove('drag-over');
+    });
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+        // Feedback Klassen entfernen beim erneuten Ziehen
+        ev.target.classList.remove('valid', 'invalid');
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        
+        // Drop-Ziel finden (muss .zone-content oder .source-container sein)
+        let target = ev.target;
+        
+        // Nach oben wandern, bis wir eine gültige Zone finden
+        while (target && !target.classList.contains('zone-content') && !target.classList.contains('source-container')) {
+            target = target.parentElement;
+        }
+
+        // Visuelles Feedback am Container entfernen
+        document.querySelectorAll('.dropzone').forEach(z => z.classList.remove('drag-over'));
+
+        if (target) {
+            const data = ev.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+            if(draggedElement) {
+                target.appendChild(draggedElement);
+            }
+        }
+    }
+
+    /* --- Auswertung --- */
+
+    function checkAnswers() {
+        const zones = document.querySelectorAll('.zone-content');
+        let allCorrect = true;
+        let allPlaced = true;
+        let itemsInZones = 0;
+
+        zones.forEach(zone => {
+            const targetType = zone.dataset.target; // m, f, n, pl
+            const items = zone.querySelectorAll('.draggable-item');
+            
+            items.forEach(item => {
+                itemsInZones++;
+                if (item.dataset.type === targetType) {
+                    item.classList.add('valid');
+                    item.classList.remove('invalid');
+                } else {
+                    item.classList.add('invalid');
+                    item.classList.remove('valid');
+                    allCorrect = false;
+                }
+            });
+        });
+
+        // Prüfen ob noch items im Source container sind
+        if (sourceContainer.children.length > 0) {
+            allPlaced = false;
+        }
+
+        if (!allPlaced) {
+            feedbackMsg.textContent = "Bitte ordnen Sie erst alle Wörter zu.";
+            feedbackMsg.style.color = "#ff9800";
+        } else if (allCorrect) {
+            feedbackMsg.textContent = "Ausgezeichnet! Alle Zuordnungen sind richtig.";
+            feedbackMsg.style.color = "var(--success)";
+        } else {
+            feedbackMsg.textContent = "Einige Zuordnungen sind falsch (rot markiert).";
+            feedbackMsg.style.color = "var(--error)";
+        }
+    }
+
+    function showSolution() {
+        // Erst zurücksetzen, um Chaos zu vermeiden
+        resetGame(); // Aber wir wollen die Wörter gleich verteilen...
+        
+        // Wir iterieren über alle Wörter (die jetzt im Source Container sind nach reset)
+        // Aber resetGame erstellt neue Elemente. Wir machen es manuell:
+        
+        // Alle aktuellen Items holen (egal wo sie sind)
+        const allItems = document.querySelectorAll('.draggable-item');
+        
+        allItems.forEach(item => {
+            const type = item.dataset.type;
+            const targetZone = document.getElementById('zone-' + type);
+            if (targetZone) {
+                targetZone.appendChild(item);
+                item.classList.add('valid'); // Grün markieren
+                item.classList.remove('invalid');
+            }
+        });
+
+        feedbackMsg.textContent = "Lösung angezeigt.";
+        feedbackMsg.style.color = "var(--primary)";
+    }
+
+    // Start beim Laden
+    window.onload = init;
+
+</script>
+
+</body>
+</html>
