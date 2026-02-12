@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Russisch Dialoge (6 Stück)</title>
+    <style>
+        :root {
+            --bg-color: #e5ddd5;
+            --bubble-left: #ffffff;
+            --bubble-right: #dcf8c6;
+            --primary: #075e54;
+            --primary-dark: #004d40;
+            --text: #333;
+            --success: #25D366;
+            --error: #f44336;
+            --gap-active: #b3e5fc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 200px; /* Platz für Tastatur & Controls */
+            color: var(--text);
+            overscroll-behavior: none;
+        }
+
+        /* --- Header mit Navigation --- */
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            color: var(--primary);
+            border-radius: 50%;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .header-info h2 { margin: 0; font-size: 1rem; }
+        .header-info p { margin: 2px 0 0; font-size: 0.75rem; opacity: 0.8; }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.1);
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 5px;
+            font-weight: bold;
+        }
+        .nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+        .page-indicator { font-size: 0.9rem; font-weight: bold; }
+
+        /* --- Chat Container --- */
+        .main-wrapper {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .chat-session {
+            display: none; /* Standardmäßig ausgeblendet */
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px 10px;
+        }
+
+        .chat-session.active {
+            display: flex; /* Nur der aktive Dialog wird angezeigt */
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sprechblasen */
+        .message {
+            max-width: 85%;
+            padding: 10px 15px;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+
+        .left {
+            align-self: flex-start;
+            background-color: var(--bubble-left);
+            border-top-left-radius: 0;
+        }
+
+        .right {
+            align-self: flex-end;
+            background-color: var(--bubble-right);
+            border-top-right-radius: 0;
+        }
+
+        .sender-name {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .translation {
+            display: block;
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 6px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding-top: 4px;
+            font-style: italic;
+        }
+
+        /* Lücken */
+        .gap {
+            display: inline-block;
+            min-width: 50px;
+            height: 26px;
+            border-bottom: 2px solid #999;
+            text-align: center;
+            color: var(--primary);
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 2px;
+            transition: all 0.2s;
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            vertical-align: middle;
+            padding: 1px 6px;
+        }
+
+        .gap.active {
+            background-color: var(--gap-active);
+            border-bottom-color: var(--primary);
+            transform: scale(1.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .gap.correct {
+            color: #2e7d32;
+            border-bottom-color: transparent;
+            background-color: rgba(76, 175, 80, 0.2);
+            pointer-events: none;
+        }
+
+        .gap.wrong {
+            color: #d32f2f;
+            border-bottom-color: #d32f2f;
+            background-color: rgba(244, 67, 54, 0.2);
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* Footer Area */
+        .footer-area {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f5f5f5;
+            border-top: 1px solid #ddd;
+            z-index: 100;
+        }
+
+        .status-bar {
+            text-align: center;
+            font-size: 0.9rem;
+            padding: 5px;
+            font-weight: bold;
+            min-height: 20px;
+            background: #fff;
+            color: #555;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 8px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 8px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #e5ddd5;
+        }
+
+        /* Buttons */
+        .btn-key {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 12px 0;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--text);
+            box-shadow: 0 2px 0 #bbb;
+            cursor: pointer;
+        }
+        
+        .btn-key:active {
+            transform: translateY(2px);
+            box-shadow: none;
+            background: #eee;
+        }
+
+        .btn-ctrl {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.2);
+        }
+
+        .btn-check { background-color: var(--primary); }
+        .btn-reset { background-color: #78909c; }
+        .btn-solve { background-color: #ff9800; }
+
+        /* Highlight Text (Info) */
+        .info-tag {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            text-transform: uppercase;
+            margin-right: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-left">
+        <div class="avatar" id="header-avatar">1</div>
+        <div class="header-info">
+            <h2 id="header-title">Fotos ansehen</h2>
+            <p id="header-subtitle">Anna & Mark</p>
+        </div>
+    </div>
+    <div class="nav-controls">
+        <button class="nav-btn" id="btn-prev" onclick="changeDialog(-1)">&#10094;</button>
+        <span class="page-indicator" id="page-indicator">1 / 6</span>
+        <button class="nav-btn" id="btn-next" onclick="changeDialog(1)">&#10095;</button>
+    </div>
+</div>
+
+<div class="main-wrapper">
+
+    <!-- DIALOG 1: Fotos (Identifikation vs Person) -->
+    <div class="chat-session active" id="dialog-1" data-title="Fotos ansehen" data-names="Anna & Mark">
+        <div class="message left">
+            <span class="sender-name">Anna</span>
+            Привет! <span class="gap" onclick="selectGap(this)" data-answer="Это"></span> твоё фото?
+            <span class="translation">Hallo! Ist das dein Foto?</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Mark</span>
+            Да. <span class="gap" onclick="selectGap(this)" data-answer="Это"></span> моя семья.
+            <span class="translation">Ja. Das ist meine Familie.</span>
+        </div>
+        <div class="message left">
+            <span class="sender-name">Anna</span>
+            Кто <span class="gap" onclick="selectGap(this)" data-answer="этот"></span> мужчина?
+            <span class="translation">Wer ist dieser Mann? (M)</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Mark</span>
+            <span class="gap" onclick="selectGap(this)" data-answer="Это"></span> мой папа.
+            <span class="translation">Das ist mein Papa.</span>
+        </div>
+    </div>
+
+    <!-- DIALOG 2: Kleidung (Genus & Attribut) -->
+    <div class="chat-session" id="dialog-2" data-title="Im Geschäft" data-names="Lisa & Verkäufer">
+        <div class="message left">
+            <span class="sender-name">Lisa</span>
+            Скажите, сколько стоит <span class="gap" onclick="selectGap(this)" data-answer="это"></span> платье?
+            <span class="translation">Sagen Sie, wie viel kostet dieses Kleid? (Neutrum)</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Verkäufer</span>
+            <span class="gap" onclick="selectGap(this)" data-answer="Это"></span> платье стоит 5000 рублей.
+            <span class="translation">Dieses Kleid kostet 5000 Rubel.</span>
+        </div>
+        <div class="message left">
+            <span class="sender-name">Lisa</span>
+            А <span class="gap" onclick="selectGap(this)" data-answer="эти"></span> туфли?
+            <span class="translation">Und diese Schuhe? (Plural)</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Verkäufer</span>
+            <span class="gap" onclick="selectGap(this)" data-answer="Эти"></span> туфли очень дорогие.
+            <span class="translation">Diese Schuhe sind sehr teuer.</span>
+        </div>
+    </div>
+
+    <!-- DIALOG 3: Büro (Gegenstände) -->
+    <div class="chat-session" id="dialog-3" data-title="Im Büro" data-names="Tom & Chef">
+        <div class="message left">
+            <span class="sender-name">Tom</span>
+            Извините, чья <span class="gap" onclick="selectGap(this)" data-answer="эта"></span> ручка?
+            <span class="translation">Entschuldigung, wessen Stift ist das? (Dieser Stift - F)</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Chef</span>
+            <span class="gap" onclick="selectGap(this)" data-answer="Это"></span> моя ручка.
+            <span class="translation">Das ist mein Stift. (Identifikation)</span>
+        </div>
+        <div class="message left">
+            <span class="sender-name">Tom</span>
+            А <span class="gap" onclick="selectGap(this)" data-answer="этот"></span> карандаш?
+            <span class="translation">Und dieser Bleistift? (M)</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Chef</span>
+            Я не знаю.
+            <span class="translation">Ich weiß es nicht.</span>
+        </div>
+    </div>
+
+    <!-- DIALOG 4: Stadt (Gebäude) -->
+    <div class="chat-session" id="dialog-4" data-title="In der Stadt" data-names="Tourist & Guide">
+        <div class="message left">
+            <span class="sender-name">Tourist</span>
+            Что <span class="gap" onclick="selectGap(this)" data-answer="это"></span>?
+            <span class="translation">Was ist das?</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Guide</span>
+            <span class="gap" onclick="selectGap(this)" data-answer="Это"></span> старый театр.
+            <span class="translation">Das ist ein altes Theater.</span>
+        </div>
+        <div class="message left">
+            <span class="sender-name">Tourist</span>
+            <span class="gap" onclick="selectGap(this)" data-answer="Этот"></span> театр очень красивый!
+            <span class="translation">Dieses Theater ist sehr schön! (M)</span>
+        </div>
+        <div class="message left">
+            <span class="sender-name">Tourist</span>
+            А <span class="gap" onclick="selectGap(this)" data-answer="это"></span> здание?
+            <span class="translation">Und dieses Gebäude? (Neutrum)</span>
+        </div>
+    </div>
+
+    <!-- DIALOG 5: Essen (Geschmack) -->
+    <div class="chat-session" id="dialog-5" data-title="Im Restaurant" data-names="Nina & Ivan">
+        <div class="message left">
+            <span class="sender-name">Nina</span>
+            <span class="gap" onclick="selectGap(this)" data-answer="Этот"></span> суп очень вкусный.
+            <span class="translation">Diese Suppe ist sehr lecker. (M)</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Ivan</span>
+            Правда? А <span class="gap" onclick="selectGap(this)" data-answer="эта"></span> пицца не очень.
+            <span class="translation">Wirklich? Aber diese Pizza ist nicht so gut. (F)</span>
+        </div>
+        <div class="message left">
+            <span class="sender-name">Nina</span>
+            Что <span class="gap" onclick="selectGap(this)" data-answer="это"></span>?
+            <span class="translation">Was ist das? (Dort auf dem Teller)</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Ivan</span>
+            <span class="gap" onclick="selectGap(this)" data-answer="Это"></span> наш счет.
+            <span class="translation">Das ist unsere Rechnung.</span>
+        </div>
+    </div>
+
+    <!-- DIALOG 6: Geschenke (Plural Identifikation) -->
+    <div class="chat-session" id="dialog-6" data-title="Geburtstag" data-names="Mama & Sohn">
+        <div class="message left">
+            <span class="sender-name">Mama</span>
+            Что <span class="gap" onclick="selectGap(this)" data-answer="это"></span>?
+            <span class="translation">Was ist das? (Allgemein)</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Sohn</span>
+            <span class="gap" onclick="selectGap(this)" data-answer="Это"></span> твои подарки!
+            <span class="translation">Das sind deine Geschenke! (Identifikation - Immer Eto)</span>
+        </div>
+        <div class="message left">
+            <span class="sender-name">Mama</span>
+            Спасибо! <span class="gap" onclick="selectGap(this)" data-answer="Эти"></span> цветы прекрасные.
+            <span class="translation">Danke! Diese Blumen sind wunderbar. (Plural)</span>
+        </div>
+        <div class="message right">
+            <span class="sender-name">Sohn</span>
+            А <span class="gap" onclick="selectGap(this)" data-answer="эта"></span> книга – бестселлер.
+            <span class="translation">Und dieses Buch ist ein Bestseller. (F)</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- Footer Bereich -->
+<div class="footer-area">
+    <div class="status-bar" id="feedback"></div>
+    
+    <div class="controls">
+        <button class="btn-ctrl btn-check" onclick="checkCurrentDialog()">Prüfen</button>
+        <button class="btn-ctrl btn-solve" onclick="solveCurrentDialog()">Lösung</button>
+        <button class="btn-ctrl btn-reset" onclick="resetCurrentDialog()">Reset</button>
+    </div>
+
+    <div class="keyboard">
+        <button class="btn-key" onmousedown="fillWord('Этот')">Этот</button>
+        <button class="btn-key" onmousedown="fillWord('Эта')">Эта</button>
+        <button class="btn-key" onmousedown="fillWord('Это')">Это</button>
+        <button class="btn-key" onmousedown="fillWord('Эти')">Эти</button>
+    </div>
+</div>
+
+<script>
+    let currentDialogIndex = 1;
+    const totalDialogs = 6;
+    let activeGap = null;
+
+    // Init
+    window.onload = function() {
+        updateUI();
+    };
+
+    function changeDialog(direction) {
+        // Neuen Index berechnen
+        currentDialogIndex += direction;
+        
+        // Grenzen checken
+        if (currentDialogIndex < 1) currentDialogIndex = 1;
+        if (currentDialogIndex > totalDialogs) currentDialogIndex = totalDialogs;
+        
+        updateUI();
+    }
+
+    function updateUI() {
+        // 1. Alle Dialoge verstecken, richtigen zeigen
+        document.querySelectorAll('.chat-session').forEach(el => {
+            el.classList.remove('active');
+        });
+        const activeDialog = document.getElementById(`dialog-${currentDialogIndex}`);
+        activeDialog.classList.add('active');
+
+        // 2. Header Infos updaten
+        document.getElementById('header-title').textContent = activeDialog.getAttribute('data-title');
+        document.getElementById('header-subtitle').textContent = activeDialog.getAttribute('data-names');
+        document.getElementById('header-avatar').textContent = currentDialogIndex;
+        document.getElementById('page-indicator').textContent = `${currentDialogIndex} / ${totalDialogs}`;
+
+        // 3. Buttons disablen wenn nötig
+        document.getElementById('btn-prev').disabled = (currentDialogIndex === 1);
+        document.getElementById('btn-next').disabled = (currentDialogIndex === totalDialogs);
+
+        // 4. Feedback leeren
+        document.getElementById('feedback').textContent = "";
+        
+        // 5. Automatisch erste Lücke im neuen Dialog wählen
+        activeGap = null;
+        const firstGap = activeDialog.querySelector('.gap:not(.correct)');
+        if(firstGap) selectGap(firstGap);
+        
+        // Nach oben scrollen
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* --- Gap Logic --- */
+
+    function selectGap(el) {
+        if(el.classList.contains('correct')) return;
+
+        // Alte Markierung weg
+        if(activeGap) activeGap.classList.remove('active');
+        
+        // Neue Markierung
+        activeGap = el;
+        activeGap.classList.add('active');
+        activeGap.classList.remove('wrong');
+        
+        ensureVisible(activeGap);
+    }
+
+    function fillWord(word) {
+        if(!activeGap) return;
+        
+        activeGap.textContent = word;
+        
+        // Zur nächsten Lücke im AKTUELLEN Dialog springen
+        findNextInCurrent();
+    }
+
+    function findNextInCurrent() {
+        const activeDialog = document.getElementById(`dialog-${currentDialogIndex}`);
+        const gaps = Array.from(activeDialog.querySelectorAll('.gap'));
+        const currentIdx = gaps.indexOf(activeGap);
+        
+        let next = null;
+        
+        // Vorwärts suchen
+        for(let i = currentIdx + 1; i < gaps.length; i++) {
+            if(gaps[i].textContent === "") {
+                next = gaps[i];
+                break;
+            }
+        }
+        
+        // Wrap around
+        if(!next) {
+            for(let i = 0; i < currentIdx; i++) {
+                if(gaps[i].textContent === "") {
+                    next = gaps[i];
+                    break;
+                }
+            }
+        }
+
+        if(next) {
+            selectGap(next);
+        }
+    }
+
+    /* --- Actions (nur für aktuellen Dialog) --- */
+
+    function checkCurrentDialog() {
+        const activeDialog = document.getElementById(`dialog-${currentDialogIndex}`);
+        const gaps = activeDialog.querySelectorAll('.gap');
+        let allCorrect = true;
+        let filledCount = 0;
+        
+        if(activeGap) {
+            activeGap.classList.remove('active');
+            activeGap = null;
+        }
+
+        gaps.forEach(gap => {
+            const userText = gap.textContent.trim().toLowerCase();
+            const correctText = gap.getAttribute('data-answer').toLowerCase();
+
+            if(userText !== "") filledCount++;
+
+            if(userText === correctText) {
+                gap.classList.add('correct');
+                gap.classList.remove('wrong');
+            } else if (userText !== "") {
+                gap.classList.add('wrong');
+                gap.classList.remove('correct');
+                allCorrect = false;
+            } else {
+                allCorrect = false; // Leere Lücke zählt als nicht fertig
+            }
+        });
+
+        const fb = document.getElementById('feedback');
+        if(filledCount === 0) {
+            fb.textContent = "Bitte wähle Antworten aus.";
+            fb.style.color = "#555";
+        } else if(allCorrect && filledCount === gaps.length) {
+            fb.textContent = "Super! Alles richtig.";
+            fb.style.color = "var(--primary)";
+        } else {
+            fb.textContent = "Schau noch einmal nach (rote Markierungen).";
+            fb.style.color = "var(--error)";
+        }
+    }
+
+    function solveCurrentDialog() {
+        const activeDialog = document.getElementById(`dialog-${currentDialogIndex}`);
+        const gaps = activeDialog.querySelectorAll('.gap');
+        
+        gaps.forEach(gap => {
+            gap.textContent = gap.getAttribute('data-answer');
+            gap.classList.add('correct');
+            gap.classList.remove('wrong', 'active');
+        });
+        
+        document.getElementById('feedback').textContent = "Lösung angezeigt.";
+        activeGap = null;
+    }
+
+    function resetCurrentDialog() {
+        const activeDialog = document.getElementById(`dialog-${currentDialogIndex}`);
+        const gaps = activeDialog.querySelectorAll('.gap');
+        
+        gaps.forEach(gap => {
+            gap.textContent = "";
+            gap.classList.remove('correct', 'wrong', 'active');
+        });
+        
+        document.getElementById('feedback').textContent = "Zurückgesetzt.";
+        
+        const first = activeDialog.querySelector('.gap');
+        if(first) selectGap(first);
+    }
+
+    function ensureVisible(el) {
+        const rect = el.getBoundingClientRect();
+        // Check ob von Footer verdeckt (ca 200px Höhe)
+        if(rect.bottom > window.innerHeight - 200) {
+            el.scrollIntoView({behavior: "smooth", block: "center"});
+        }
+    }
+
+</script>
+
+</body>
+</html>
