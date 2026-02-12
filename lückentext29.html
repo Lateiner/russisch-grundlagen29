@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Russisch Lückentext: 10 Beispiele</title>
+    <style>
+        :root {
+            --primary: #3f51b5;
+            --primary-light: #e8eaf6;
+            --text: #333;
+            --bg: #f4f6f8;
+            --success: #4caf50;
+            --error: #f44336;
+            --warning: #ff9800; /* Für Lösung Button */
+            --neutral: #78909c; /* Für Reset Button */
+            --gap-border: #999;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 160px; /* Platz für die Tastatur unten */
+            color: var(--text);
+        }
+
+        /* Fixed Header mit Progress Bar */
+        .header {
+            background-color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .header h2 { margin: 0 0 10px 0; font-size: 1.2rem; color: var(--primary); }
+        
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--success);
+            transition: width 0.3s ease;
+        }
+
+        .stats {
+            text-align: right;
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        /* Die Sätze */
+        .sentence-item {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            font-size: 1.15rem;
+            line-height: 1.6;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            border-left: 5px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .sentence-item.solved {
+            border-left-color: var(--success);
+        }
+
+        .translation {
+            display: block;
+            width: 100%;
+            font-size: 0.9rem;
+            color: #777;
+            margin-top: 8px;
+            font-style: italic;
+            border-top: 1px solid #eee;
+            padding-top: 5px;
+        }
+
+        /* Die Lücke */
+        .gap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 90px;
+            height: 38px;
+            margin: 0 6px;
+            background-color: white;
+            border-bottom: 2px solid var(--gap-border);
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--primary);
+            padding: 0 10px;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        /* Zustand: Aktiv (Ausgewählt) */
+        .gap.active {
+            background-color: var(--primary-light);
+            border-bottom-color: var(--primary);
+            box-shadow: 0 0 8px rgba(63, 81, 181, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* Zustand: Richtig */
+        .gap.correct {
+            color: var(--success);
+            border-bottom-color: var(--success);
+            background-color: #e8f5e9;
+            cursor: default;
+            pointer-events: none; /* Nicht mehr klickbar */
+        }
+
+        /* Zustand: Falsch */
+        .gap.wrong {
+            color: var(--error);
+            border-bottom-color: var(--error);
+            background-color: #ffebee;
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Steuerungsbuttons am Ende der Liste */
+        .controls-area {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .ctrl-btn {
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+            min-width: 140px;
+        }
+
+        .ctrl-btn:active { transform: scale(0.96); }
+
+        .btn-reset { background-color: var(--neutral); }
+        .btn-solve { background-color: var(--warning); }
+
+        /* Die Soft-Tastatur (Sticky Footer) */
+        .virtual-keyboard {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            padding: 15px;
+            z-index: 100;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Mobile: 2x2 */
+            gap: 12px;
+            box-sizing: border-box;
+        }
+        
+        @media(min-width: 600px) {
+            .virtual-keyboard {
+                grid-template-columns: repeat(4, 1fr); /* Desktop: 4 nebeneinander */
+                padding: 20px;
+                max-width: 900px;
+                left: 50%;
+                transform: translateX(-50%);
+                border-radius: 15px 15px 0 0;
+            }
+        }
+
+        .key-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 16px 0;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.1s, transform 0.1s;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+        }
+
+        .key-btn:active {
+            transform: translateY(3px);
+            box-shadow: none;
+            background-color: #303f9f;
+        }
+
+        /* Overlay wenn fertig */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            flex-direction: column;
+        }
+        
+        .success-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .success-card h2 { color: var(--success); margin-top: 0; }
+        
+        .btn-restart {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div style="display:flex; justify-content:space-between; align-items:flex-end">
+        <h2>Pronomen-Trainer</h2>
+        <div class="stats" id="stats">0 / 10</div>
+    </div>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+</div>
+
+<div class="container">
+    
+    <!-- 1. Männlich -->
+    <div class="sentence-item">
+        <span class="text">1.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Этот"></div>
+        <span class="text">студент изучает русский язык.</span>
+        <span class="translation">Dieser Student lernt Russisch. (Männlich)</span>
+    </div>
+
+    <!-- 2. Weiblich -->
+    <div class="sentence-item">
+        <span class="text">2.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Эта"></div>
+        <span class="text">женщина моя сестра.</span>
+        <span class="translation">Diese Frau ist meine Schwester. (Weiblich)</span>
+    </div>
+
+    <!-- 3. Sächlich -->
+    <div class="sentence-item">
+        <span class="text">3.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Это"></div>
+        <span class="text">окно чистое.</span>
+        <span class="translation">Dieses Fenster ist sauber. (Sächlich)</span>
+    </div>
+
+    <!-- 4. Plural -->
+    <div class="sentence-item">
+        <span class="text">4.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Эти"></div>
+        <span class="text">книги очень интересные.</span>
+        <span class="translation">Diese Bücher sind sehr interessant. (Plural)</span>
+    </div>
+
+    <!-- 5. Identifikation (Das ist...) -->
+    <div class="sentence-item">
+        <span class="text">5.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Это"></div>
+        <span class="text">мой друг Иван.</span>
+        <span class="translation">Das ist mein Freund Ivan. (Identifikation)</span>
+    </div>
+
+    <!-- 6. Männlich (Gegenstand) -->
+    <div class="sentence-item">
+        <span class="text">6.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Этот"></div>
+        <span class="text">автобус едет быстро.</span>
+        <span class="translation">Dieser Bus fährt schnell. (Männlich)</span>
+    </div>
+
+    <!-- 7. Identifikation (Plural - Falle!) -->
+    <div class="sentence-item">
+        <span class="text">7.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Это"></div>
+        <span class="text">наши новые соседи.</span>
+        <span class="translation">Das sind unsere neuen Nachbarn. (Identifikation: "Das sind..." = immer Eto)</span>
+    </div>
+    
+    <!-- 8. Weiblich (Gegenstand) -->
+    <div class="sentence-item">
+        <span class="text">8.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Эта"></div>
+        <span class="text">сумка тяжелая.</span>
+        <span class="translation">Diese Tasche ist schwer. (Weiblich)</span>
+    </div>
+
+    <!-- 9. Sächlich (Abstrakt) -->
+    <div class="sentence-item">
+        <span class="text">9.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Это"></div>
+        <span class="text">слово трудное.</span>
+        <span class="translation">Dieses Wort ist schwierig. (Sächlich)</span>
+    </div>
+
+    <!-- 10. Plural (Personen) -->
+    <div class="sentence-item">
+        <span class="text">10.</span>
+        <div class="gap" onclick="selectGap(this)" data-answer="Эти"></div>
+        <span class="text">дети играют в парке.</span>
+        <span class="translation">Diese Kinder spielen im Park. (Plural)</span>
+    </div>
+
+    <!-- Neue Steuerungsbuttons -->
+    <div class="controls-area">
+        <button class="ctrl-btn btn-reset" onclick="resetGame()">Zurücksetzen</button>
+        <button class="ctrl-btn btn-solve" onclick="showSolution()">Lösung anzeigen</button>
+    </div>
+
+</div>
+
+<!-- Success Overlay -->
+<div class="overlay" id="success-overlay">
+    <div class="success-card">
+        <h2>Glückwunsch!</h2>
+        <p>Du hast alle 10 Sätze richtig gelöst.</p>
+        <button class="btn-restart" onclick="resetGame()">Nochmal üben</button>
+    </div>
+</div>
+
+<!-- Die virtuelle Tastatur -->
+<div class="virtual-keyboard">
+    <button class="key-btn" onmousedown="submitWord('Этот')">Этот</button>
+    <button class="key-btn" onmousedown="submitWord('Эта')">Эта</button>
+    <button class="key-btn" onmousedown="submitWord('Это')">Это</button>
+    <button class="key-btn" onmousedown="submitWord('Эти')">Эти</button>
+</div>
+
+<script>
+    let activeGap = null;
+    let correctCount = 0;
+    const totalCount = 10;
+
+    // Start: Erste Lücke auswählen
+    window.onload = function() {
+        const firstGap = document.querySelector('.gap');
+        if(firstGap) selectGap(firstGap);
+    };
+
+    function selectGap(element) {
+        // Wenn Lücke schon gelöst ist, ignorieren
+        if (element.classList.contains('correct')) return;
+
+        // Vorherige Auswahl entfernen
+        if (activeGap) {
+            activeGap.classList.remove('active');
+        }
+
+        activeGap = element;
+        activeGap.classList.add('active');
+        activeGap.classList.remove('wrong'); // Rot entfernen bei neuer Auswahl
+
+        ensureVisible(activeGap);
+    }
+
+    function submitWord(word) {
+        if (!activeGap) return;
+
+        const correctAnswer = activeGap.getAttribute('data-answer');
+
+        // Text einsetzen
+        activeGap.textContent = word;
+
+        if (word === correctAnswer) {
+            // RICHTIG
+            activeGap.classList.remove('active', 'wrong');
+            activeGap.classList.add('correct');
+            
+            // Eltern-Container markieren (grüner Balken links)
+            activeGap.closest('.sentence-item').classList.add('solved');
+
+            correctCount++;
+            updateProgress();
+            
+            // Check ob alles fertig
+            if (correctCount === totalCount) {
+                setTimeout(() => {
+                    document.getElementById('success-overlay').style.display = 'flex';
+                }, 500);
+            } else {
+                // Zur nächsten Lücke springen
+                findNextGap();
+            }
+
+        } else {
+            // FALSCH
+            activeGap.classList.add('wrong');
+            activeGap.style.animation = 'none';
+            activeGap.offsetHeight; /* trigger reflow */
+            activeGap.style.animation = null; 
+        }
+    }
+
+    function findNextGap() {
+        const allGaps = Array.from(document.querySelectorAll('.gap'));
+        const currentIndex = allGaps.indexOf(activeGap);
+        
+        // Nächste ungelöste Lücke suchen
+        let nextGap = null;
+        for (let i = currentIndex + 1; i < allGaps.length; i++) {
+            if (!allGaps[i].classList.contains('correct')) {
+                nextGap = allGaps[i];
+                break;
+            }
+        }
+        
+        // Wenn keine danach, von vorne suchen
+        if (!nextGap) {
+            for (let i = 0; i < currentIndex; i++) {
+                if (!allGaps[i].classList.contains('correct')) {
+                    nextGap = allGaps[i];
+                    break;
+                }
+            }
+        }
+
+        if (nextGap) {
+            selectGap(nextGap);
+        } else {
+            activeGap = null; // Fokus entfernen
+        }
+    }
+
+    function updateProgress() {
+        const percentage = (correctCount / totalCount) * 100;
+        document.getElementById('progress-bar').style.width = percentage + '%';
+        document.getElementById('stats').textContent = `${correctCount} / ${totalCount}`;
+    }
+
+    // --- Neue Funktionen für Buttons ---
+
+    function resetGame() {
+        // Overlay verstecken
+        document.getElementById('success-overlay').style.display = 'none';
+        
+        correctCount = 0;
+        updateProgress();
+
+        const gaps = document.querySelectorAll('.gap');
+        const items = document.querySelectorAll('.sentence-item');
+
+        // Lücken zurücksetzen
+        gaps.forEach(gap => {
+            gap.textContent = '';
+            gap.classList.remove('correct', 'wrong', 'active');
+            // 'pointer-events: none' wird durch Entfernen von 'correct' wieder aufgehoben? 
+            // CSS sagt: .correct { pointer-events: none }. Wenn Klasse weg, dann wieder klickbar.
+        });
+
+        // Grüne Balken entfernen
+        items.forEach(item => {
+            item.classList.remove('solved');
+        });
+
+        // Erste Lücke wieder aktivieren
+        activeGap = null;
+        const firstGap = document.querySelector('.gap');
+        if(firstGap) selectGap(firstGap);
+        
+        // Nach oben scrollen
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showSolution() {
+        const gaps = document.querySelectorAll('.gap');
+        
+        gaps.forEach(gap => {
+            const answer = gap.getAttribute('data-answer');
+            gap.textContent = answer;
+            gap.classList.remove('wrong', 'active');
+            gap.classList.add('correct');
+            
+            // Eltern-Container markieren
+            gap.closest('.sentence-item').classList.add('solved');
+        });
+
+        correctCount = totalCount;
+        updateProgress();
+        activeGap = null; // Kein Fokus mehr
+    }
+
+    // Hilfsfunktion: Scrollen wenn Element von Tastatur verdeckt
+    function ensureVisible(element) {
+        const rect = element.getBoundingClientRect();
+        const keyboardHeight = document.querySelector('.virtual-keyboard').offsetHeight;
+        const viewportHeight = window.innerHeight;
+        
+        if (rect.bottom > viewportHeight - keyboardHeight - 20) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }
+</script>
+
+</body>
+</html>
